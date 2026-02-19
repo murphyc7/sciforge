@@ -1,0 +1,76 @@
+[build-system]
+requires = ["setuptools>=65.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sciforge"
+version = "0.1.0"
+description = "Scientific computation forge: numerical and visualisation tools for computational science"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+    {name = "Conal Murphy", email = "conalmurphy993@gmail.com"}
+]
+keywords = ["numerical", "scientific-computing", "visualisation", "computational-science"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+]
+
+dependencies = [
+    "numpy>=1.24.0",
+    "scipy>=1.10.0",
+    "matplotlib>=3.7.0",
+]
+
+[project.optional-dependencies]
+viz = []
+io = []
+signal = []
+dev = [
+    "pytest>=7.3.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.3.0",
+    "ruff>=0.0.270",
+    "mypy>=1.3.0",
+    "sphinx>=6.2.0",
+    "sphinx-rtd-theme>=1.2.0",
+]
+all = [
+    "sciforge[viz,io,signal,dev]",
+]
+
+[project.urls]
+Homepage = "https://github.com/murphyc7/sciforge"
+# Documentation = ""
+Repository = "https://github.com/murphyc7/sciforge"
+Issues = "https://github.com/murphyc7/sciforge/issues"
+
+[tool.setuptools.packages.find]
+include = ["sciforge*"]
+
+[tool.pytest.ini_options]
+testpaths = ["test"]
+python_files = ["test_*.py"]
+addopts = "-ra -q --strict-markers --cov=src/sciforge --cov-report=term-missing"
+
+[tool.black]
+line-length = 88
+target-version = ['py310']
+
+[tool.ruff]
+line-length = 88
+select = ["E", "F", "W", "I", "N", "B", "UP"]
+ignore = ["E501"]  # Line too long (handled by black)
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
