@@ -7,7 +7,7 @@ class BaseMaterialClient(ABC):
 
     @abstractmethod
     def fetch_material_data(self, material_id: str) -> dict[str, Any]:
-        pass
+        pass # pragma: no cover
 
 
 class MockMaterialsProjectClient(BaseMaterialClient):

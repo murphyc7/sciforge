@@ -22,3 +22,4 @@ def fixture_mock_db(monkeypatch):
 
     yield client
     db_client.Base.metadata.drop_all(bind=engine)
+    engine.dispose()
