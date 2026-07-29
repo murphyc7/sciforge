@@ -8,15 +8,23 @@ from sqlalchemy.exc import OperationalError
 from sciforge.matkit.pipeline import api_client, clustering, etl_process
 from sciforge.matkit.utils import db_client
 
-# 1. murphyc7/sciforge/src/sciforge/matkit/utils/db_client.py
+###############################################################
+# 1. murphyc7/sciforge/src/sciforge/matkit/utils/db_client.py #
+###############################################################
 
-def test_db_client_creates_tables_successfully(mock_db: db_client.DatabaseClient) -> None:
-    """Validates that the initialization engine maps schemas to the DB correctly."""
+
+def test_db_client_creates_tables_successfully(
+    mock_db: db_client.DatabaseClient,
+) -> None:
+    """Validates that the initialisation engine maps schemas to the DB correctly."""
     with mock_db.get_session() as session:
         results = session.query(db_client.MaterialModel).all()
         assert len(results) == 0
 
-def test_db_client_create_tables_method_executes(mock_db: db_client.DatabaseClient) -> None:
+
+def test_db_client_create_tables_method_executes(
+    mock_db: db_client.DatabaseClient,
+) -> None:
     """Explicitly triggers the wrapper table creation method to secure 100% test coverage."""
     # Calling this on our existing mock_db will safely run the line
     # against our in-memory engine without breaking existing schemas.
@@ -26,7 +34,11 @@ def test_db_client_create_tables_method_executes(mock_db: db_client.DatabaseClie
         # Check that the database can query the table structure cleanly
         assert session.query(db_client.MaterialModel).all() == []
 
-# 2. murphyc7/sciforge/src/sciforge/matkit/pipeline/api_client.py
+
+###################################################################
+# 2. murphyc7/sciforge/src/sciforge/matkit/pipeline/api_client.py #
+###################################################################
+
 
 def test_mock_api_client_returns_valid_payload() -> None:
     """Ensures the mock API client provides the expected data architecture structures."""
@@ -37,7 +49,11 @@ def test_mock_api_client_returns_valid_payload() -> None:
     assert "electronic_properties" in payload
     assert payload["electronic_properties"]["effective_mass_electrons"] == 0.067
 
-# 3. murphyc7/sciforge/src/sciforge/matkit/pipeline/etl_process.py
+
+####################################################################
+# 3. murphyc7/sciforge/src/sciforge/matkit/pipeline/etl_process.py #
+####################################################################
+
 
 def test_etl_pipeline_successfully_saves_to_database(mock_db) -> None:
     """Verifies unformatted dictionary data is parsed and stored matching schema standards."""
@@ -56,7 +72,10 @@ def test_etl_pipeline_successfully_saves_to_database(mock_db) -> None:
         assert record.formula == "GaAs"
         assert record.effective_mass_me == 0.067
 
-def test_etl_pipeline_handles_missing_nested_json_keys(mock_db: db_client.DatabaseClient) -> None:
+
+def test_etl_pipeline_handles_missing_nested_json_keys(
+    mock_db: db_client.DatabaseClient,
+) -> None:
     """Verifies the ETL defaults missing structural properties to 1.0 gracefully."""
     bad_client = MagicMock()
     bad_client.fetch_material_data.return_value = {
@@ -69,10 +88,15 @@ def test_etl_pipeline_handles_missing_nested_json_keys(mock_db: db_client.Databa
     pipeline.run("mp-broken")
 
     with mock_db.get_session() as session:
-        record = session.query(db_client.MaterialModel).filter_by(material_id="mp-broken").first()
+        record = (
+            session.query(db_client.MaterialModel)
+            .filter_by(material_id="mp-broken")
+            .first()
+        )
         assert record is not None
         assert record.effective_mass_me == 1.0  # Fallback triggered
         assert record.permittivity == 1.0  # Fallback triggered
+
 
 def test_etl_pipeline_logs_and_raises_database_exceptions(
     mock_db: db_client.DatabaseClient,
@@ -90,13 +114,18 @@ def test_etl_pipeline_logs_and_raises_database_exceptions(
     with pytest.raises(OperationalError):
         pipeline.run("mp-1234")
 
-# 4. murphyc7/sciforge/src/sciforge/matkit/pipeline/clustering.py
+
+###################################################################
+# 4. murphyc7/sciforge/src/sciforge/matkit/pipeline/clustering.py #
+###################################################################
+
 
 def test_clustering_engine_raises_value_error_when_database_is_empty(mock_db) -> None:
     """Guarantees clustering fails gracefully with a ValueError if no records exist."""
     engine = clustering.ElectronicClusteringEngine(db_client=mock_db, n_clusters=2)
     with pytest.raises(ValueError, match="No material properties found"):
         engine.fit()
+
 
 def test_clustering_assign_clusters_raises_runtime_error_if_not_fitted(
     mock_db: db_client.DatabaseClient,

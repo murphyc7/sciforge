@@ -56,6 +56,7 @@ Repository = "https://github.com/murphyc7/sciforge"
 Issues = "https://github.com/murphyc7/sciforge/issues"
 
 [tool.setuptools.packages.find]
+where=["src"]
 include = ["sciforge*"]
 
 [tool.pytest.ini_options]
