@@ -29,6 +29,8 @@ dependencies = [
     "matplotlib>=3.7.0",
     "scikit-learn>=1.9.0",
     "sqlalchemy>=2.0.51",
+    "psycopg2-binary>=2.9.12",
+    "torch>=2.13.0",
 ]
 
 [project.optional-dependencies]
@@ -43,7 +45,6 @@ dev = [
     "mypy>=1.3.0",
     "sphinx>=6.2.0",
     "sphinx-rtd-theme>=1.2.0",
-    "psycopg2-binary>=2.9.12",
 ]
 all = [
     "sciforge[viz,io,signal,dev]",
