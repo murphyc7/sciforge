@@ -6,7 +6,7 @@ export DATABASE_URL="postgresql://postgres_user:secure_pass@localhost:5432/scifo
 # Find the absolute canonical path of the folder containing this shell script
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# CRITICAL FIX: Direct the Python Path to search inside the src/ directory
+# Direct the Python Path to search inside the src/ directory
 export PYTHONPATH="${REPO_ROOT}/src"
 
 echo "=== System Path Resolution ==="
@@ -29,3 +29,6 @@ python "${REPO_ROOT}/apps/run_materials_pipeline.py" --material-ids mp-100 mp-20
 
 echo "=== 5. Final SQL Schema Extraction Check ==="
 PGPASSWORD="secure_pass" psql -h localhost -U postgres_user -d sciforge_db -c "SELECT * FROM materials;"
+
+echo "=== 6. Executing Carrier Transport PINN Simulation ==="
+python "${REPO_ROOT}/apps/run_carrier_simulation.py" --material-id mp-100 --epochs 500
