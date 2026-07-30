@@ -2,8 +2,16 @@ import torch
 
 
 class DriftDiffusionPhysics:
-    """Evaluates the physical partial differential equation residuals for carrier transport."""
+    """Evaluates the physical partial differential equation residuals for carrier transport.
 
+    This class links semiconductor device constraints (effective mass, permittivity)
+    to a PyTorch optimization graph to solve steady-state drift-diffusion equations.
+
+    Args:
+        effective_mass (float): The material effective mass relative to electron mass (m_e).
+        permittivity (float): The relative material permittivity (dielectric constant).
+        electric_field (float, optional): Applied electric field in V/m. Defaults to 1.0e3.
+    """
     def __init__(
         self, effective_mass: float, permittivity: float, electric_field: float = 1.0e3
     ) -> None:
@@ -22,7 +30,18 @@ class DriftDiffusionPhysics:
     def compute_pde_residual(
         self, x: torch.Tensor, model: torch.nn.Module
     ) -> torch.Tensor:
-        """Calculates the physical residual error of the drift-diffusion PDE using autograd."""
+        """Calculates the physical residual error of the drift-diffusion PDE using autograd.
+
+        Computes the second-order spatial derivative to enforce:
+        D_n * (d2n/dx2) + mu_n * E * (dn/dx) = 0
+
+        Args:
+            x (torch.Tensor): Spatial coordinate inputs of shape [Batch, 1].
+            model (torch.nn.Module): The neural network predicting carrier density n(x).
+
+        Returns:
+            torch.Tensor: The physical residual tensor evaluated at each input point.
+        """
         # Force tracker graph inclusion for spatial coordinates
         x.requires_grad_(True)
 

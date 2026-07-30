@@ -1,3 +1,9 @@
+"""Data Analytics and unsupervised physical parameter clustering engine.
+
+Extracts data vectors from the relational framework, standardises feature variances,
+and labels records using k-means clustering.
+"""
+
 import logging
 from typing import Any
 
@@ -14,6 +20,12 @@ class ElectronicClusteringEngine:
     """Clusters database material structural profiles based on physical constraints."""
 
     def __init__(self, db_client: DatabaseClient, n_clusters: int = 3) -> None:
+        """Initialises the statistical clustering model.
+
+        Args:
+            db_client (DatabaseClient): Active relational database interface client.
+            n_clusters (int, optional): Total categorical splits to create. Defaults to 3.
+        """
         self.db_client = db_client
         self.n_clusters = n_clusters
         self.scaler = StandardScaler()
@@ -21,7 +33,14 @@ class ElectronicClusteringEngine:
         self._is_fitted = False
 
     def _fetch_training_features(self) -> tuple[list[MaterialModel], np.ndarray]:
-        """Extracts numerical features from the DB using the SQLAlchemy abstraction."""
+        """Queries properties from the database and structures them into a numerical array.
+
+        Returns:
+            Tuple[List[MaterialModel], np.ndarray]: Database objects alongside a 2D float array.
+
+        Raises:
+            ValueError: If the targeted database query returns an empty collection.
+        """
         with self.db_client.get_session() as session:
             # Query all rows from the target materials table
             records: list[MaterialModel] = session.query(MaterialModel).all()
@@ -37,7 +56,11 @@ class ElectronicClusteringEngine:
             return records, features
 
     def fit(self) -> "ElectronicClusteringEngine":
-        """Fits the data preprocessing pipeline and clustering engine."""
+        """Fits the data preprocessing pipeline and clustering engine.
+
+        Returns:
+            ElectronicClusteringEngine: The trained instance profile for method chaining.
+        """
         try:
             logger.info("Extracting data coordinates from relational store...")
             _, features = self._fetch_training_features()
@@ -53,7 +76,14 @@ class ElectronicClusteringEngine:
             raise e
 
     def assign_clusters(self) -> list[dict[str, Any]]:
-        """Maps computed categorical groupings back to structural metadata identities."""
+        """Maps computed categorical groupings back to structural metadata identities.
+
+        Returns:
+            List[Dict[str, Any]]: Explicit layout summaries matching data mappings.
+
+        Raises:
+            RuntimeError: If called before running the required fit pipeline loops.
+        """
         if not self._is_fitted:
             raise RuntimeError("Cannot assign clusters; fit() must be called first.")
 
