@@ -6,7 +6,7 @@ export DATABASE_URL="postgresql://postgres_user:secure_pass@localhost:5432/scifo
 # Find the absolute canonical path of the folder containing this shell script
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# CRITICAL FIX: Direct the Python Path to search inside the src/ directory
+# Direct the Python Path to search inside the src/ directory
 export PYTHONPATH="${REPO_ROOT}/src"
 
 echo "=== System Path Resolution ==="

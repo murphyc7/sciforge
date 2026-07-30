@@ -21,7 +21,7 @@ def main() -> None:
     parser.add_argument(
         "--material-id", type=str, default="mp-100", help="Target Material ID"
     )
-    parser.add_argument("--epochs", type=int, default=500, help="Optimization steps")
+    parser.add_argument("--epochs", type=int, default=500, help="Optimisation steps")
     args = parser.parse_args()
 
     # Step 1: Query material metrics from PostgreSQL
@@ -42,10 +42,10 @@ def main() -> None:
 
     logger.info(f"Loaded constraints for {formula}: m*={m_eff}, eps={eps}")
 
-    # Step 2: Initialize PyTorch SciML Models
+    # Step 2: Initialise PyTorch SciML Models
     model = CarrierPINN()
     physics_engine = DriftDiffusionPhysics(effective_mass=m_eff, permittivity=eps)
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+    optimiser = torch.optim.Adam(model.parameters(), lr=1e-3)
     mse_criterion = nn.MSELoss()
 
     # Step 3: Define spatial boundary grid (x scaled from 0.0 to 1.0 micron)
@@ -58,11 +58,11 @@ def main() -> None:
     x_boundary_right = torch.tensor([[1.0]], dtype=torch.float32)
     n_boundary_right = torch.tensor([[0.0]], dtype=torch.float32)
 
-    logger.info("Starting Physics-Informed Neural Network optimization loop...")
+    logger.info("Starting Physics-Informed Neural Network optimisation loop...")
 
     # Step 4: Training Loop
     for epoch in range(args.epochs + 1):
-        optimizer.zero_grad()
+        optimiser.zero_grad()
 
         # Evaluate structural boundary mismatch (Data Loss)
         pred_left = model(x_boundary_left)
@@ -78,7 +78,7 @@ def main() -> None:
         # Combined loss structure
         total_loss = loss_boundary + loss_physics
         total_loss.backward()
-        optimizer.step()
+        optimiser.step()
 
         if epoch % 100 == 0:
             logger.info(
