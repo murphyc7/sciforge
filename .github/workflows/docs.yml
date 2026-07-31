@@ -37,6 +37,7 @@ jobs:
         run: |
           cd docs
           make html
+          touch build/html/.nojekyll
 
       - name: Deploy Generated Manuals to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4

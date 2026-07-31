@@ -42,7 +42,7 @@ $$\mathcal{R}(x) = D_n \frac{d^2n}{dx^2} + \mu_n E \frac{dn}{dx} - R(x) = 0$$
 Where:
 * **Mobility Scaling**: Material mobility scales dynamically based on physical constraints fetched from your database: $\mu_n = \frac{0.14}{m^*}$.
 * **Einstein Relation**: The diffusion coefficient is directly linked to the computed mobility via: $D_n = \mu_n \frac{k_B T}{q}$.
-* **Loss Optimisation**: Network parameters are updated by minimising a joint loss metric combining hard Dirichlet edge mismatches with internal PDE structural residuals: $\mathcal{L}_{total} = \mathcal{L}_{boundary} + \mathcal{L}_{physics}$.
+* **Loss Optimisation**: Network parameters are updated by minimising a joint loss metric combining hard Dirichlet edge mismatches with internal PDE structural residuals: $`\mathcal{L}_{\text{total}} = \mathcal{L}_{\text{boundary}} + \mathcal{L}_{\text{physics}}`$.
 
 ---
 
