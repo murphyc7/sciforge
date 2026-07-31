@@ -5,7 +5,7 @@ class DriftDiffusionPhysics:
     """Evaluates the physical partial differential equation residuals for carrier transport.
 
     This class links semiconductor device constraints (effective mass, permittivity)
-    to a PyTorch optimization graph to solve steady-state drift-diffusion equations.
+    to a PyTorch optimisation graph to solve steady-state drift-diffusion equations.
 
     Args:
         effective_mass (float): The material effective mass relative to electron mass (m_e).
