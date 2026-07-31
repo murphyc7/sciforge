@@ -1,0 +1,453 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Welcome to the SciForge documentation! &mdash; SciForge 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=01f34227"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="#" class="icon icon-home">
+            SciForge
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">Welcome to the SciForge documentation!</a><ul>
+<li><a class="reference internal" href="#module-sciforge.matkit.utils.db_client">Data Engineering Modules</a><ul>
+<li><a class="reference internal" href="#sciforge.matkit.utils.db_client.DatabaseClient"><code class="docutils literal notranslate"><span class="pre">DatabaseClient</span></code></a><ul>
+<li><a class="reference internal" href="#sciforge.matkit.utils.db_client.DatabaseClient.create_tables"><code class="docutils literal notranslate"><span class="pre">DatabaseClient.create_tables()</span></code></a></li>
+<li><a class="reference internal" href="#sciforge.matkit.utils.db_client.DatabaseClient.get_session"><code class="docutils literal notranslate"><span class="pre">DatabaseClient.get_session()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sciforge.matkit.utils.db_client.MaterialModel"><code class="docutils literal notranslate"><span class="pre">MaterialModel</span></code></a><ul>
+<li><a class="reference internal" href="#sciforge.matkit.utils.db_client.MaterialModel.material_id"><code class="docutils literal notranslate"><span class="pre">MaterialModel.material_id</span></code></a></li>
+<li><a class="reference internal" href="#sciforge.matkit.utils.db_client.MaterialModel.formula"><code class="docutils literal notranslate"><span class="pre">MaterialModel.formula</span></code></a></li>
+<li><a class="reference internal" href="#sciforge.matkit.utils.db_client.MaterialModel.space_group"><code class="docutils literal notranslate"><span class="pre">MaterialModel.space_group</span></code></a></li>
+<li><a class="reference internal" href="#sciforge.matkit.utils.db_client.MaterialModel.effective_mass_me"><code class="docutils literal notranslate"><span class="pre">MaterialModel.effective_mass_me</span></code></a></li>
+<li><a class="reference internal" href="#sciforge.matkit.utils.db_client.MaterialModel.permittivity"><code class="docutils literal notranslate"><span class="pre">MaterialModel.permittivity</span></code></a></li>
+<li><a class="reference internal" href="#sciforge.matkit.utils.db_client.MaterialModel.created_at"><code class="docutils literal notranslate"><span class="pre">MaterialModel.created_at</span></code></a></li>
+<li><a class="reference internal" href="#id0"><code class="docutils literal notranslate"><span class="pre">MaterialModel.effective_mass_me</span></code></a></li>
+<li><a class="reference internal" href="#id1"><code class="docutils literal notranslate"><span class="pre">MaterialModel.formula</span></code></a></li>
+<li><a class="reference internal" href="#id2"><code class="docutils literal notranslate"><span class="pre">MaterialModel.material_id</span></code></a></li>
+<li><a class="reference internal" href="#id3"><code class="docutils literal notranslate"><span class="pre">MaterialModel.permittivity</span></code></a></li>
+<li><a class="reference internal" href="#id4"><code class="docutils literal notranslate"><span class="pre">MaterialModel.space_group</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sciforge.matkit.pipeline.etl_process.MaterialETLPipeline"><code class="docutils literal notranslate"><span class="pre">MaterialETLPipeline</span></code></a><ul>
+<li><a class="reference internal" href="#sciforge.matkit.pipeline.etl_process.MaterialETLPipeline.run"><code class="docutils literal notranslate"><span class="pre">MaterialETLPipeline.run()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sciforge.matkit.pipeline.clustering.ElectronicClusteringEngine"><code class="docutils literal notranslate"><span class="pre">ElectronicClusteringEngine</span></code></a><ul>
+<li><a class="reference internal" href="#sciforge.matkit.pipeline.clustering.ElectronicClusteringEngine.assign_clusters"><code class="docutils literal notranslate"><span class="pre">ElectronicClusteringEngine.assign_clusters()</span></code></a></li>
+<li><a class="reference internal" href="#sciforge.matkit.pipeline.clustering.ElectronicClusteringEngine.fit"><code class="docutils literal notranslate"><span class="pre">ElectronicClusteringEngine.fit()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-sciforge.matkit.carrier_pinn.models">Materials Toolkit (MatKit)</a><ul>
+<li><a class="reference internal" href="#sciforge.matkit.carrier_pinn.models.CarrierPINN"><code class="docutils literal notranslate"><span class="pre">CarrierPINN</span></code></a><ul>
+<li><a class="reference internal" href="#sciforge.matkit.carrier_pinn.models.CarrierPINN.forward"><code class="docutils literal notranslate"><span class="pre">CarrierPINN.forward()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sciforge.matkit.carrier_pinn.physics.DriftDiffusionPhysics"><code class="docutils literal notranslate"><span class="pre">DriftDiffusionPhysics</span></code></a><ul>
+<li><a class="reference internal" href="#sciforge.matkit.carrier_pinn.physics.DriftDiffusionPhysics.compute_pde_residual"><code class="docutils literal notranslate"><span class="pre">DriftDiffusionPhysics.compute_pde_residual()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-sciforge.integrate.quadrature">Integration Tools</a><ul>
+<li><a class="reference internal" href="#sciforge.integrate.quadrature.simpson"><code class="docutils literal notranslate"><span class="pre">simpson()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">SciForge</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Welcome to the SciForge documentation!</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="welcome-to-the-sciforge-documentation">
+<h1>Welcome to the SciForge documentation!<a class="headerlink" href="#welcome-to-the-sciforge-documentation" title="Link to this heading"></a></h1>
+<section id="module-sciforge.matkit.utils.db_client">
+<span id="data-engineering-modules"></span><h2>Data Engineering Modules<a class="headerlink" href="#module-sciforge.matkit.utils.db_client" title="Link to this heading"></a></h2>
+<p>Database infrastructure layer for managing connections and mapping relational schemas.</p>
+<p>This module encapsulates SQLAlchemy connection pooling, maps application models to
+physical tables, and exposes transactional sessions to downstream pipelines.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="sciforge.matkit.utils.db_client.DatabaseClient">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sciforge.matkit.utils.db_client.</span></span><span class="sig-name descname"><span class="pre">DatabaseClient</span></span><a class="reference internal" href="_modules/sciforge/matkit/utils/db_client.html#DatabaseClient"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sciforge.matkit.utils.db_client.DatabaseClient" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Manages connection lifecycles and transactional operations for the data store.</p>
+<p>Establishes a thread-safe connection pool using connection parameters pulled from system
+environment configurations.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="sciforge.matkit.utils.db_client.DatabaseClient.create_tables">
+<span class="sig-name descname"><span class="pre">create_tables</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/sciforge/matkit/utils/db_client.html#DatabaseClient.create_tables"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sciforge.matkit.utils.db_client.DatabaseClient.create_tables" title="Link to this definition"></a></dt>
+<dd><p>Generates all structural physical tables mapped via SQLAlchemy models if missing.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sciforge.matkit.utils.db_client.DatabaseClient.get_session">
+<span class="sig-name descname"><span class="pre">get_session</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/sciforge/matkit/utils/db_client.html#DatabaseClient.get_session"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sciforge.matkit.utils.db_client.DatabaseClient.get_session" title="Link to this definition"></a></dt>
+<dd><p>Returns a managed database session instance context wrapper.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A local transactional database session instance.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Session</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sciforge.matkit.utils.db_client.MaterialModel">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sciforge.matkit.utils.db_client.</span></span><span class="sig-name descname"><span class="pre">MaterialModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sciforge/matkit/utils/db_client.html#MaterialModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sciforge.matkit.utils.db_client.MaterialModel" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Base</span></code></p>
+<p>SQLAlchemy object-relational mapping for tracking material physical properties.</p>
+<p>Maps physical constraints fetched from external discovery APIs onto the relational
+schema structure to act as analytical baselines.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sciforge.matkit.utils.db_client.MaterialModel.material_id">
+<span class="sig-name descname"><span class="pre">material_id</span></span><a class="headerlink" href="#sciforge.matkit.utils.db_client.MaterialModel.material_id" title="Link to this definition"></a></dt>
+<dd><p>Primary key identifier string (e.g., ‘mp-100’).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sciforge.matkit.utils.db_client.MaterialModel.formula">
+<span class="sig-name descname"><span class="pre">formula</span></span><a class="headerlink" href="#sciforge.matkit.utils.db_client.MaterialModel.formula" title="Link to this definition"></a></dt>
+<dd><p>Reducible chemical formula string identifier.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sciforge.matkit.utils.db_client.MaterialModel.space_group">
+<span class="sig-name descname"><span class="pre">space_group</span></span><a class="headerlink" href="#sciforge.matkit.utils.db_client.MaterialModel.space_group" title="Link to this definition"></a></dt>
+<dd><p>Crystallographic international space group number.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sciforge.matkit.utils.db_client.MaterialModel.effective_mass_me">
+<span class="sig-name descname"><span class="pre">effective_mass_me</span></span><a class="headerlink" href="#sciforge.matkit.utils.db_client.MaterialModel.effective_mass_me" title="Link to this definition"></a></dt>
+<dd><p>Relative electron effective mass curvature value.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sciforge.matkit.utils.db_client.MaterialModel.permittivity">
+<span class="sig-name descname"><span class="pre">permittivity</span></span><a class="headerlink" href="#sciforge.matkit.utils.db_client.MaterialModel.permittivity" title="Link to this definition"></a></dt>
+<dd><p>Relative macroscopic static material dielectric permittivity.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sciforge.matkit.utils.db_client.MaterialModel.created_at">
+<span class="sig-name descname"><span class="pre">created_at</span></span><a class="headerlink" href="#sciforge.matkit.utils.db_client.MaterialModel.created_at" title="Link to this definition"></a></dt>
+<dd><p>Chronological insert timestamp generated by the database.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id0">
+<span class="sig-name descname"><span class="pre">effective_mass_me</span></span><a class="headerlink" href="#id0" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id1">
+<span class="sig-name descname"><span class="pre">formula</span></span><a class="headerlink" href="#id1" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id2">
+<span class="sig-name descname"><span class="pre">material_id</span></span><a class="headerlink" href="#id2" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id3">
+<span class="sig-name descname"><span class="pre">permittivity</span></span><a class="headerlink" href="#id3" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id4">
+<span class="sig-name descname"><span class="pre">space_group</span></span><a class="headerlink" href="#id4" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<p id="module-sciforge.matkit.pipeline.etl_process">Data Engineering Extract, Transform, and Load (ETL) processing components.</p>
+<p>Ingests nested JSON parameters from physics clients, cleans layout structures,
+and saves them to relational tables.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="sciforge.matkit.pipeline.etl_process.MaterialETLPipeline">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sciforge.matkit.pipeline.etl_process.</span></span><span class="sig-name descname"><span class="pre">MaterialETLPipeline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">api_client</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">BaseMaterialClient</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">db_client</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#sciforge.matkit.utils.db_client.DatabaseClient" title="sciforge.matkit.utils.db_client.DatabaseClient"><span class="pre">DatabaseClient</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sciforge/matkit/pipeline/etl_process.html#MaterialETLPipeline"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sciforge.matkit.pipeline.etl_process.MaterialETLPipeline" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Manages the Extract, Transform, and Load lifecycle for materials discovery.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="sciforge.matkit.pipeline.etl_process.MaterialETLPipeline.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">material_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/sciforge/matkit/pipeline/etl_process.html#MaterialETLPipeline.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sciforge.matkit.pipeline.etl_process.MaterialETLPipeline.run" title="Link to this definition"></a></dt>
+<dd><p>Executes a synchronous extraction, transformation, and load run for a material.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>material_id</strong> (<em>str</em>) – Alphanumeric reference string to ingest.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>Exception</strong> – Re-raises any underlying network or database exception encountered.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<p id="module-sciforge.matkit.pipeline.clustering">Data Analytics and unsupervised physical parameter clustering engine.</p>
+<p>Extracts data vectors from the relational framework, standardises feature variances,
+and labels records using k-means clustering.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="sciforge.matkit.pipeline.clustering.ElectronicClusteringEngine">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sciforge.matkit.pipeline.clustering.</span></span><span class="sig-name descname"><span class="pre">ElectronicClusteringEngine</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db_client</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#sciforge.matkit.utils.db_client.DatabaseClient" title="sciforge.matkit.utils.db_client.DatabaseClient"><span class="pre">DatabaseClient</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_clusters</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">3</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sciforge/matkit/pipeline/clustering.html#ElectronicClusteringEngine"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sciforge.matkit.pipeline.clustering.ElectronicClusteringEngine" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Clusters database material structural profiles based on physical constraints.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="sciforge.matkit.pipeline.clustering.ElectronicClusteringEngine.assign_clusters">
+<span class="sig-name descname"><span class="pre">assign_clusters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/sciforge/matkit/pipeline/clustering.html#ElectronicClusteringEngine.assign_clusters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sciforge.matkit.pipeline.clustering.ElectronicClusteringEngine.assign_clusters" title="Link to this definition"></a></dt>
+<dd><p>Maps computed categorical groupings back to structural metadata identities.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Explicit layout summaries matching data mappings.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>List[Dict[str, Any]]</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>RuntimeError</strong> – If called before running the required fit pipeline loops.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sciforge.matkit.pipeline.clustering.ElectronicClusteringEngine.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#sciforge.matkit.pipeline.clustering.ElectronicClusteringEngine" title="sciforge.matkit.pipeline.clustering.ElectronicClusteringEngine"><span class="pre">ElectronicClusteringEngine</span></a></span></span><a class="reference internal" href="_modules/sciforge/matkit/pipeline/clustering.html#ElectronicClusteringEngine.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sciforge.matkit.pipeline.clustering.ElectronicClusteringEngine.fit" title="Link to this definition"></a></dt>
+<dd><p>Fits the data preprocessing pipeline and clustering engine.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The trained instance profile for method chaining.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#sciforge.matkit.pipeline.clustering.ElectronicClusteringEngine" title="sciforge.matkit.pipeline.clustering.ElectronicClusteringEngine">ElectronicClusteringEngine</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-sciforge.matkit.carrier_pinn.models">
+<span id="materials-toolkit-matkit"></span><h2>Materials Toolkit (MatKit)<a class="headerlink" href="#module-sciforge.matkit.carrier_pinn.models" title="Link to this heading"></a></h2>
+<p>Multi-Layer Perceptron architectures optimised for differential calculus solvers.</p>
+<p>Defines smooth multilayer network profiles designed to support uninterrupted backpropagation
+operations without suffering from vanishing numerical gradients.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="sciforge.matkit.carrier_pinn.models.CarrierPINN">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sciforge.matkit.carrier_pinn.models.</span></span><span class="sig-name descname"><span class="pre">CarrierPINN</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_dim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hidden_layers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hidden_dim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">50</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sciforge/matkit/carrier_pinn/models.html#CarrierPINN"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sciforge.matkit.carrier_pinn.models.CarrierPINN" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>A deep network layer architecture for modeling charge carrier spatial distributions.</p>
+<p>Implements a fully connected Multi-Layer Perceptron (MLP) configuration using Hyperbolic
+Tangent (Tanh) activation functions to calculate stable higher-order derivatives.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="sciforge.matkit.carrier_pinn.models.CarrierPINN.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tensor</span></span></span><a class="reference internal" href="_modules/sciforge/matkit/carrier_pinn/models.html#CarrierPINN.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sciforge.matkit.carrier_pinn.models.CarrierPINN.forward" title="Link to this definition"></a></dt>
+<dd><p>Evaluates carrier concentration predictions at targeted spatial grids.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>torch.Tensor</em>) – Coordinates tensor grid of shape [Batch Size, 1].</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The corresponding predicted carrier concentrations.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class" id="module-sciforge.matkit.carrier_pinn.physics">
+<dt class="sig sig-object py" id="sciforge.matkit.carrier_pinn.physics.DriftDiffusionPhysics">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sciforge.matkit.carrier_pinn.physics.</span></span><span class="sig-name descname"><span class="pre">DriftDiffusionPhysics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">effective_mass</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permittivity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">electric_field</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1000.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sciforge/matkit/carrier_pinn/physics.html#DriftDiffusionPhysics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sciforge.matkit.carrier_pinn.physics.DriftDiffusionPhysics" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Evaluates the physical partial differential equation residuals for carrier transport.</p>
+<p>This class links semiconductor device constraints (effective mass, permittivity)
+to a PyTorch optimisation graph to solve steady-state drift-diffusion equations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>effective_mass</strong> (<em>float</em>) – The material effective mass relative to electron mass (m_e).</p></li>
+<li><p><strong>permittivity</strong> (<em>float</em>) – The relative material permittivity (dielectric constant).</p></li>
+<li><p><strong>electric_field</strong> (<em>float</em><em>, </em><em>optional</em>) – Applied electric field in V/m. Defaults to 1.0e3.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="sciforge.matkit.carrier_pinn.physics.DriftDiffusionPhysics.compute_pde_residual">
+<span class="sig-name descname"><span class="pre">compute_pde_residual</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Module</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tensor</span></span></span><a class="reference internal" href="_modules/sciforge/matkit/carrier_pinn/physics.html#DriftDiffusionPhysics.compute_pde_residual"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sciforge.matkit.carrier_pinn.physics.DriftDiffusionPhysics.compute_pde_residual" title="Link to this definition"></a></dt>
+<dd><p>Calculates the physical residual error of the drift-diffusion PDE using autograd.</p>
+<p>Computes the second-order spatial derivative to enforce:
+D_n * (d2n/dx2) + mu_n * E * (dn/dx) = 0</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>torch.Tensor</em>) – Spatial coordinate inputs of shape [Batch, 1].</p></li>
+<li><p><strong>model</strong> (<em>torch.nn.Module</em>) – The neural network predicting carrier density n(x).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The physical residual tensor evaluated at each input point.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-sciforge.integrate.quadrature">
+<span id="integration-tools"></span><h2>Integration Tools<a class="headerlink" href="#module-sciforge.integrate.quadrature" title="Link to this heading"></a></h2>
+<p>Quadrature numerical integration methods.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="sciforge.integrate.quadrature.simpson">
+<span class="sig-prename descclassname"><span class="pre">sciforge.integrate.quadrature.</span></span><span class="sig-name descname"><span class="pre">simpson</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fnc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="_modules/sciforge/integrate/quadrature.html#simpson"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sciforge.integrate.quadrature.simpson" title="Link to this definition"></a></dt>
+<dd><p>Simpson’s rule for numerical integration</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fnc</strong> (<em>float</em>) – function</p></li>
+<li><p><strong>a</strong> (<em>float</em>) – lower bound</p></li>
+<li><p><strong>b</strong> (<em>float</em>) – upper bound</p></li>
+<li><p><strong>n</strong> (<em>int</em>) – num steps</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – n must be even</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>result of integration</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Conal Murphy.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

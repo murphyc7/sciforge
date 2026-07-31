@@ -1,0 +1,181 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sciforge.matkit.carrier_pinn.physics &mdash; SciForge 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            SciForge
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">SciForge</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">sciforge.matkit.carrier_pinn.physics</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for sciforge.matkit.carrier_pinn.physics</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+
+
+<div class="viewcode-block" id="DriftDiffusionPhysics">
+<a class="viewcode-back" href="../../../../index.html#sciforge.matkit.carrier_pinn.physics.DriftDiffusionPhysics">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DriftDiffusionPhysics</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Evaluates the physical partial differential equation residuals for carrier transport.</span>
+
+<span class="sd">    This class links semiconductor device constraints (effective mass, permittivity)</span>
+<span class="sd">    to a PyTorch optimisation graph to solve steady-state drift-diffusion equations.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        effective_mass (float): The material effective mass relative to electron mass (m_e).</span>
+<span class="sd">        permittivity (float): The relative material permittivity (dielectric constant).</span>
+<span class="sd">        electric_field (float, optional): Applied electric field in V/m. Defaults to 1.0e3.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">effective_mass</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">permittivity</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">electric_field</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0e3</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Base physical constants</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">q</span> <span class="o">=</span> <span class="mf">1.602e-19</span>  <span class="c1"># Electron charge (C)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kb_t</span> <span class="o">=</span> <span class="mf">0.0259</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">q</span>  <span class="c1"># Thermal energy at 300K (J)</span>
+
+        <span class="c1"># Dynamic material property calculations derived from database metrics</span>
+        <span class="c1"># Standard baseline silicon mobility scales inversely with effective mass ratio</span>
+        <span class="n">base_mobility</span> <span class="o">=</span> <span class="mf">0.14</span>  <span class="c1"># m^2/(V*s)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mobility</span> <span class="o">=</span> <span class="n">base_mobility</span> <span class="o">/</span> <span class="p">(</span><span class="n">effective_mass</span> <span class="o">+</span> <span class="mf">1e-8</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">diffusion_coeff</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mobility</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kb_t</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">electric_field</span> <span class="o">=</span> <span class="n">electric_field</span>  <span class="c1"># V/m</span>
+
+<div class="viewcode-block" id="DriftDiffusionPhysics.compute_pde_residual">
+<a class="viewcode-back" href="../../../../index.html#sciforge.matkit.carrier_pinn.physics.DriftDiffusionPhysics.compute_pde_residual">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_pde_residual</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculates the physical residual error of the drift-diffusion PDE using autograd.</span>
+
+<span class="sd">        Computes the second-order spatial derivative to enforce:</span>
+<span class="sd">        D_n * (d2n/dx2) + mu_n * E * (dn/dx) = 0</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            x (torch.Tensor): Spatial coordinate inputs of shape [Batch, 1].</span>
+<span class="sd">            model (torch.nn.Module): The neural network predicting carrier density n(x).</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            torch.Tensor: The physical residual tensor evaluated at each input point.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Force tracker graph inclusion for spatial coordinates</span>
+        <span class="n">x</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># Evaluate model prediction: n = f(x)</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+        <span class="c1"># Compute first derivative: dn/dx</span>
+        <span class="n">dn_dx</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span>
+            <span class="n">outputs</span><span class="o">=</span><span class="n">n</span><span class="p">,</span>
+            <span class="n">inputs</span><span class="o">=</span><span class="n">x</span><span class="p">,</span>
+            <span class="n">grad_outputs</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">n</span><span class="p">),</span>
+            <span class="n">create_graph</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">retain_graph</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">only_inputs</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># Compute second derivative: d2n/dx2</span>
+        <span class="n">d2n_dx2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span>
+            <span class="n">outputs</span><span class="o">=</span><span class="n">dn_dx</span><span class="p">,</span>
+            <span class="n">inputs</span><span class="o">=</span><span class="n">x</span><span class="p">,</span>
+            <span class="n">grad_outputs</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">dn_dx</span><span class="p">),</span>
+            <span class="n">create_graph</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">retain_graph</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">only_inputs</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># Assume net generation-recombination rate R(x) is negligible for steady-state demonstration</span>
+        <span class="c1"># PDE Residual: D_n * (d2n/dx2) + mu_n * E * (dn/dx) = 0</span>
+        <span class="n">drift_term</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mobility</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">electric_field</span> <span class="o">*</span> <span class="n">dn_dx</span>
+        <span class="n">diffusion_term</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">diffusion_coeff</span> <span class="o">*</span> <span class="n">d2n_dx2</span>
+
+        <span class="n">residual</span> <span class="o">=</span> <span class="n">diffusion_term</span> <span class="o">+</span> <span class="n">drift_term</span>
+        <span class="k">return</span> <span class="n">residual</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Conal Murphy.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
