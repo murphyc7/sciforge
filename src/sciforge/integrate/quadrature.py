@@ -1,4 +1,5 @@
-"""murphyc7/sciforge/src/sciforge/integrate/quadrature.py"""
+"""Quadrature numerical integration methods.
+"""
 
 import numpy as np
 
