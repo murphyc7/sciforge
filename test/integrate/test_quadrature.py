@@ -38,6 +38,31 @@ def test_singularity_and_nan_detection() -> None:
     with pytest.raises(ValueError, match="singularity detected"):
         integrator.trapezoidal(0.0, 2.0, n=10)
 
+def test_validate_bounds_exceptions() -> None:
+    """Asserts that _validate_bounds() successfully intercepts and blocks
+    invalid, infinite, or non-numeric (NaN) domain parameters.
+    """
+    integrator = QuadratureIntegrator(lambda x: x**2)
+
+    # 1. Assert failure when a boundary contains a NaN value
+    with pytest.raises(ValueError, match="Integration boundaries cannot be NaN."):
+        integrator.trapezoidal(np.nan, 1.0, n=10)
+
+    with pytest.raises(ValueError, match="Integration boundaries cannot be NaN."):
+        integrator.simpsons(0.0, np.nan, n=10)
+
+    # 2. Assert failure when bounded methods are passed infinite parameters
+    with pytest.raises(ValueError, match="Infinite boundaries detected."):
+        integrator.gauss_legendre(-np.inf, 1.0, deg=8)
+
+    with pytest.raises(ValueError, match="Infinite boundaries detected."):
+        integrator.clenshaw_curtis(0.0, np.inf, n=16)
+
+    # 3. Assert failure when vectorized arrays contain infinite parameters
+    with pytest.raises(ValueError, match="Infinite boundaries detected."):
+        vector_b = np.array([1.0, 2.0, np.inf])
+        integrator.trapezoidal(0.0, vector_b, n=10)
+
 
 ######################################################################
 # 2. Core Classical Solvers (Trapezoidal, Simpson's, Gauss-Legendre) #
@@ -60,6 +85,30 @@ def test_gauss_legendre_exactness() -> None:
     expected = 64.0 / 6.0
     res = integrator.gauss_legendre(0.0, 2.0, deg=3)
     assert math.isclose(res, expected, abs_tol=1e-12)
+
+
+def test_multidimensional_grid_bounds_classical_solvers() -> None:
+    """Asserts that both trapezoidal and simpsons methods correctly handle higher-dimensional
+    boundary arrays (max_ndim > 0) by dynamically broadcasting the evaluation grid.
+    """
+    # Simple linear function: f(x) = x. Integral is 0.5 * (b^2 - a^2)
+    integrator = QuadratureIntegrator(lambda x: x)
+
+    # Define a 2D grid of upper integration bounds (Shape: 2x3)
+    b_matrix = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
+
+    # Theoretical exact results: 0.5 * b^2
+    expected_results = 0.5 * (b_matrix**2)
+
+    # 1. Triggers 'max_ndim > 0' inside the trapezoidal method
+    results_trap = integrator.trapezoidal(0.0, b_matrix, n=100)
+    assert results_trap.shape == (2, 3)
+    assert np.allclose(results_trap, expected_results, atol=1e-5)
+
+    # 2. Triggers 'max_ndim > 0' inside the simpsons method
+    results_simp = integrator.simpsons(0.0, b_matrix, n=100)
+    assert results_simp.shape == (2, 3)
+    assert np.allclose(results_simp, expected_results, atol=1e-5)
 
 
 ###############################################
@@ -92,6 +141,86 @@ def test_adaptive_simpsons_convergence() -> None:
 
     assert math.isclose(res, 2.0, abs_tol=1e-7)
     assert integrator.metrics["max_recursion_depth"] > 0
+
+
+def test_adaptive_simpsons_invalid_parameter_guards() -> None:
+    """
+    Asserts that adaptive_simpsons successfully intercepts and blocks
+    invalid tolerance (tol <= 0) and maximum recursion depth (max_depth <= 0) parameters.
+    """
+    integrator = QuadratureIntegrator(lambda x: x**2)
+
+    # 1. Assert failure when tolerance is exactly zero
+    with pytest.raises(
+        ValueError, match="Error tolerance 'tol' must be strictly positive."
+    ):
+        integrator.adaptive_simpsons(0.0, 1.0, tol=0.0)
+
+    # 2. Assert failure when tolerance is a negative value
+    with pytest.raises(
+        ValueError, match="Error tolerance 'tol' must be strictly positive."
+    ):
+        integrator.adaptive_simpsons(0.0, 1.0, tol=-1e-5)
+
+    # 3. Assert failure when max_depth is exactly zero
+    with pytest.raises(
+        ValueError,
+        match="Maximum recursion depth 'max_depth' must be a positive integer.",
+    ):
+        integrator.adaptive_simpsons(0.0, 1.0, max_depth=0)
+
+    # 4. Assert failure when max_depth is a negative integer
+    with pytest.raises(
+        ValueError,
+        match="Maximum recursion depth 'max_depth' must be a positive integer.",
+    ):
+        integrator.adaptive_simpsons(0.0, 1.0, max_depth=-5)
+
+
+def test_adaptive_simpsons_nan_and_inf_bounds_guard() -> None:
+    """
+    Asserts that adaptive_simpsons successfully intercepts and blocks
+    non-finite input limits including NaN, positive infinity, and negative infinity.
+    """
+    integrator = QuadratureIntegrator(lambda x: x**2)
+    error_msg = (
+        "Invalid parameters passed. Adaptive integration requires fixed finite inputs."
+    )
+
+    # 1. Assert failure when the lower bound 'a' is a NaN
+    with pytest.raises(ValueError, match=error_msg):
+        integrator.adaptive_simpsons(np.nan, 1.0)
+
+    # 2. Assert failure when the upper bound 'b' is a NaN
+    with pytest.raises(ValueError, match=error_msg):
+        integrator.adaptive_simpsons(0.0, np.nan)
+
+    # 3. Assert failure when the lower bound 'a' is negative infinity
+    with pytest.raises(ValueError, match=error_msg):
+        integrator.adaptive_simpsons(-np.inf, 1.0)
+
+    # 4. Assert failure when the upper bound 'b' is positive infinity
+    with pytest.raises(ValueError, match=error_msg):
+        integrator.adaptive_simpsons(0.0, np.inf)
+
+
+def test_adaptive_simpsons_max_depth_escape_path() -> None:
+    """
+    Asserts that _adaptive_simpsons_step gracefully handles non-convergence
+    by breaking recursion loops and updating state when reaching max_depth.
+    """
+    # A highly active function that is notoriously difficult to resolve numerically
+    challenging_func = lambda x: np.sin(1.0 / (x + 1e-5))  # noqa: E731
+    integrator = QuadratureIntegrator(challenging_func)
+
+    # Force an immediate depth break by setting a tiny max_depth cap and high tolerance
+    res = integrator.adaptive_simpsons(0.0, 1.0, tol=1e-12, max_depth=3)  # noqa: F841
+
+    # 1. Assert that the telemetry registry properly captures the depth ceiling hit
+    assert integrator.metrics["max_recursion_depth"] == 3
+
+    # 2. Assert that the engine tracked and accumulated the non-converging subinterval errors
+    assert integrator.metrics["estimated_error"] > 0.0
 
 
 def test_clenshaw_curtis_performance() -> None:
