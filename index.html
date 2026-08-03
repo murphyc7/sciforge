@@ -86,7 +86,16 @@
 </ul>
 </li>
 <li><a class="reference internal" href="#module-sciforge.integrate.quadrature">Integration Tools</a><ul>
-<li><a class="reference internal" href="#sciforge.integrate.quadrature.simpson"><code class="docutils literal notranslate"><span class="pre">simpson()</span></code></a></li>
+<li><a class="reference internal" href="#sciforge.integrate.quadrature.QuadratureIntegrator"><code class="docutils literal notranslate"><span class="pre">QuadratureIntegrator</span></code></a><ul>
+<li><a class="reference internal" href="#sciforge.integrate.quadrature.QuadratureIntegrator.adaptive_simpsons"><code class="docutils literal notranslate"><span class="pre">QuadratureIntegrator.adaptive_simpsons()</span></code></a></li>
+<li><a class="reference internal" href="#sciforge.integrate.quadrature.QuadratureIntegrator.clenshaw_curtis"><code class="docutils literal notranslate"><span class="pre">QuadratureIntegrator.clenshaw_curtis()</span></code></a></li>
+<li><a class="reference internal" href="#sciforge.integrate.quadrature.QuadratureIntegrator.gauss_legendre"><code class="docutils literal notranslate"><span class="pre">QuadratureIntegrator.gauss_legendre()</span></code></a></li>
+<li><a class="reference internal" href="#sciforge.integrate.quadrature.QuadratureIntegrator.integrate_infinite"><code class="docutils literal notranslate"><span class="pre">QuadratureIntegrator.integrate_infinite()</span></code></a></li>
+<li><a class="reference internal" href="#sciforge.integrate.quadrature.QuadratureIntegrator.simpsons"><code class="docutils literal notranslate"><span class="pre">QuadratureIntegrator.simpsons()</span></code></a></li>
+<li><a class="reference internal" href="#sciforge.integrate.quadrature.QuadratureIntegrator.tanh_sinh"><code class="docutils literal notranslate"><span class="pre">QuadratureIntegrator.tanh_sinh()</span></code></a></li>
+<li><a class="reference internal" href="#sciforge.integrate.quadrature.QuadratureIntegrator.trapezoidal"><code class="docutils literal notranslate"><span class="pre">QuadratureIntegrator.trapezoidal()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -393,30 +402,208 @@ D_n * (d2n/dx2) + mu_n * E * (dn/dx) = 0</p>
 </section>
 <section id="module-sciforge.integrate.quadrature">
 <span id="integration-tools"></span><h2>Integration Tools<a class="headerlink" href="#module-sciforge.integrate.quadrature" title="Link to this heading"></a></h2>
-<p>Quadrature numerical integration methods.</p>
-<dl class="py function">
-<dt class="sig sig-object py" id="sciforge.integrate.quadrature.simpson">
-<span class="sig-prename descclassname"><span class="pre">sciforge.integrate.quadrature.</span></span><span class="sig-name descname"><span class="pre">simpson</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fnc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="_modules/sciforge/integrate/quadrature.html#simpson"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sciforge.integrate.quadrature.simpson" title="Link to this definition"></a></dt>
-<dd><p>Simpson’s rule for numerical integration</p>
+<p>Quadrature numerical integration techniques.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="sciforge.integrate.quadrature.QuadratureIntegrator">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sciforge.integrate.quadrature.</span></span><span class="sig-name descname"><span class="pre">QuadratureIntegrator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sciforge/integrate/quadrature.html#QuadratureIntegrator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sciforge.integrate.quadrature.QuadratureIntegrator" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Numerical integration (quadrature) suite.</p>
+<p>Handles vectorised inputs, dynamic Gauss-Legendre node generation,
+adaptive refinement, fast Fourier transform-backed Clenshaw-Curtis,
+infinite boundary mapping, and Tanh-Sinh double exponential integration.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="sciforge.integrate.quadrature.QuadratureIntegrator.adaptive_simpsons">
+<span class="sig-name descname"><span class="pre">adaptive_simpsons</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_depth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">50</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="_modules/sciforge/integrate/quadrature.html#QuadratureIntegrator.adaptive_simpsons"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sciforge.integrate.quadrature.QuadratureIntegrator.adaptive_simpsons" title="Link to this definition"></a></dt>
+<dd><p>Evaluate the integral using a recursive Adaptive Simpson’s technique.</p>
+<p>Dynamically refines structural grid steps across specific sub-domains
+where the target function experiences rapid spatial changes or high oscillations.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>fnc</strong> (<em>float</em>) – function</p></li>
-<li><p><strong>a</strong> (<em>float</em>) – lower bound</p></li>
-<li><p><strong>b</strong> (<em>float</em>) – upper bound</p></li>
-<li><p><strong>n</strong> (<em>int</em>) – num steps</p></li>
+<li><p><strong>a</strong> (<em>float</em>) – Lower bound of the integration domain.</p></li>
+<li><p><strong>b</strong> (<em>float</em>) – Upper bound of the integration domain.</p></li>
+<li><p><strong>tol</strong> (<em>float</em>) – Local accuracy error tolerance threshold. Defaults to 1e-6.</p></li>
+<li><p><strong>max_depth</strong> (<em>int</em>) – Maximum recursion depth ceiling to protect against infinite
+subdivision loops. Defaults to 50.</p></li>
 </ul>
 </dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The highly refined numerical integration solution value.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – n must be even</p>
-</dd>
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>result of integration</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>float</p>
+<dd class="field-even"><p><strong>ValueError</strong> – If input bounds are NaN/Inf, or if error tolerance ‘tol’ or
+    ‘max_depth’ are set to zero or a negative value.</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sciforge.integrate.quadrature.QuadratureIntegrator.clenshaw_curtis">
+<span class="sig-name descname"><span class="pre">clenshaw_curtis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/sciforge/integrate/quadrature.html#QuadratureIntegrator.clenshaw_curtis"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sciforge.integrate.quadrature.QuadratureIntegrator.clenshaw_curtis" title="Link to this definition"></a></dt>
+<dd><p>Evaluate the definite integral using the Clenshaw-Curtis technique.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>float</em><em> | </em><em>np.ndarray</em>) – Lower integration limit(s).</p></li>
+<li><p><strong>b</strong> (<em>float</em><em> | </em><em>np.ndarray</em>) – Upper integration limit(s).</p></li>
+<li><p><strong>n</strong> (<em>int</em>) – Number of nodes representing polynomial interpolation depth order.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Mapped integration output array matching input dimension configurations.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float | np.ndarray</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If node resolution value ‘n’ is not a strictly positive integer.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sciforge.integrate.quadrature.QuadratureIntegrator.gauss_legendre">
+<span class="sig-name descname"><span class="pre">gauss_legendre</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/sciforge/integrate/quadrature.html#QuadratureIntegrator.gauss_legendre"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sciforge.integrate.quadrature.QuadratureIntegrator.gauss_legendre" title="Link to this definition"></a></dt>
+<dd><p>Evaluate the definite integral using Gauss-Legendre Quadrature.</p>
+<p>Calculates optimal nodes and weights dynamically via the Golub-Welsch symmetric tridiagonal
+matrix eigenvalue solver. Exact for polynomials of degree 2N - 1 or less.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>float</em><em> | </em><em>np.ndarray</em>) – Lower integration limit(s).</p></li>
+<li><p><strong>b</strong> (<em>float</em><em> | </em><em>np.ndarray</em>) – Upper integration limit(s).</p></li>
+<li><p><strong>deg</strong> (<em>int</em>) – Polynomial degree specifying the number of quadrature nodes (N).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>Calculated numerical integral approximation. Returns a scalar</dt><dd><p>float for scalar inputs, or a NumPy array if evaluating vector bounds.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float | np.ndarray</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If polynomial degree ‘deg’ is not a strictly positive integer.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sciforge.integrate.quadrature.QuadratureIntegrator.integrate_infinite">
+<span class="sig-name descname"><span class="pre">integrate_infinite</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'gauss_legendre'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/sciforge/integrate/quadrature.html#QuadratureIntegrator.integrate_infinite"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sciforge.integrate.quadrature.QuadratureIntegrator.integrate_infinite" title="Link to this definition"></a></dt>
+<dd><p>Evaluate improper integrals over semi-infinite or infinite domain fields.</p>
+<p>Leverages adaptive change-of-variable coordinate mappings to condense unbounded endpoints into
+a closed, finite integration landscape smoothly.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>float</em>) – Lower integration boundary limit (can set explicitly to -np.inf).</p></li>
+<li><p><strong>b</strong> (<em>float</em>) – Upper integration boundary limit (can set explicitly to np.inf).</p></li>
+<li><p><strong>method</strong> (<em>str</em>) – Name string selector referencing target execution technique. Defaults to “gauss_legendre”.</p></li>
+<li><p><strong>**kwargs</strong> – Configuration flags and hyper-parameters passed downstream to backend runners.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Evaluated numerical result over the mapped continuous domain.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float | np.ndarray</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If both bounds are finite numbers, or range sequencing directions are mismatched.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sciforge.integrate.quadrature.QuadratureIntegrator.simpsons">
+<span class="sig-name descname"><span class="pre">simpsons</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/sciforge/integrate/quadrature.html#QuadratureIntegrator.simpsons"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sciforge.integrate.quadrature.QuadratureIntegrator.simpsons" title="Link to this definition"></a></dt>
+<dd><p>Evaluate the definite integral using the Composite Simpson’s 1/3 technique.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>float</em><em> | </em><em>np.ndarray</em>) – Lower integration limit(s).</p></li>
+<li><p><strong>b</strong> (<em>float</em><em> | </em><em>np.ndarray</em>) – Upper integration limit(s).</p></li>
+<li><p><strong>n</strong> (<em>int</em>) – Number of subintervals (must be a positive even integer).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>A scalar float if input boundaries are scalars, or a</dt><dd><p>NumPy array of matching dimension if vectorized arrays are provided.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float | np.ndarray</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If boundaries fail validation checks, or if subintervals ‘n’
+    is not a positive even integer value.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sciforge.integrate.quadrature.QuadratureIntegrator.tanh_sinh">
+<span class="sig-name descname"><span class="pre">tanh_sinh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1e-09</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_level</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">6</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="_modules/sciforge/integrate/quadrature.html#QuadratureIntegrator.tanh_sinh"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sciforge.integrate.quadrature.QuadratureIntegrator.tanh_sinh" title="Link to this definition"></a></dt>
+<dd><p>Evaluate functions using the Tanh-Sinh Double Exponential quadrature technique.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>float</em>) – Lower bounding tracking index coordinate.</p></li>
+<li><p><strong>b</strong> (<em>float</em>) – Upper bounding tracking index coordinate.</p></li>
+<li><p><strong>tol</strong> (<em>float</em>) – Targeted precision error budget threshold convergence floor. Defaults to 1e-9.</p></li>
+<li><p><strong>max_level</strong> (<em>int</em>) – Maximum geometric loop generation slicing depth steps. Defaults to 6.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Highly resolved numerical evaluation calculation output.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If accuracy convergence budget parameters evaluate below zero thresholds.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sciforge.integrate.quadrature.QuadratureIntegrator.trapezoidal">
+<span class="sig-name descname"><span class="pre">trapezoidal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/sciforge/integrate/quadrature.html#QuadratureIntegrator.trapezoidal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sciforge.integrate.quadrature.QuadratureIntegrator.trapezoidal" title="Link to this definition"></a></dt>
+<dd><p>Evaluate the definite integral using the Composite Trapezoidal technique.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>float</em><em> | </em><em>np.ndarray</em>) – Lower integration limit(s).</p></li>
+<li><p><strong>b</strong> (<em>float</em><em> | </em><em>np.ndarray</em>) – Upper integration limit(s).</p></li>
+<li><p><strong>n</strong> (<em>int</em>) – Number of subintervals (panels) to divide the domain into.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>A scalar float if input boundaries are scalars, or a</dt><dd><p>NumPy array of matching dimension if vectorized arrays are provided.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float | np.ndarray</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If integration bounds contain illegal parameters, or if the
+    number of subintervals ‘n’ is less than or equal to 0.</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 </section>

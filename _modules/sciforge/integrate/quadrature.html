@@ -66,45 +66,604 @@
            <div itemprop="articleBody">
              
   <h1>Source code for sciforge.integrate.quadrature</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Quadrature numerical integration methods.</span>
+<span></span><span class="sd">&quot;&quot;&quot;Quadrature numerical integration techniques.</span>
 <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
 
-<div class="viewcode-block" id="simpson">
-<a class="viewcode-back" href="../../../index.html#sciforge.integrate.quadrature.simpson">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">simpson</span><span class="p">(</span><span class="n">fnc</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Simpson&#39;s rule for numerical integration</span>
+<div class="viewcode-block" id="QuadratureIntegrator">
+<a class="viewcode-back" href="../../../index.html#sciforge.integrate.quadrature.QuadratureIntegrator">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">QuadratureIntegrator</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Numerical integration (quadrature) suite.</span>
 
-<span class="sd">    Args:</span>
-<span class="sd">        fnc (float): function</span>
-<span class="sd">        a (float): lower bound</span>
-<span class="sd">        b (float): upper bound</span>
-<span class="sd">        n (int): num steps</span>
-
-<span class="sd">    Raises:</span>
-<span class="sd">        ValueError: n must be even</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        float: result of integration</span>
+<span class="sd">    Handles vectorised inputs, dynamic Gauss-Legendre node generation,</span>
+<span class="sd">    adaptive refinement, fast Fourier transform-backed Clenshaw-Curtis,</span>
+<span class="sd">    infinite boundary mapping, and Tanh-Sinh double exponential integration.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># Validate input</span>
-    <span class="k">if</span> <span class="n">n</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;n must be even&quot;</span><span class="p">)</span>
 
-    <span class="c1"># Arrange quantities</span>
-    <span class="n">h</span> <span class="o">=</span> <span class="p">(</span><span class="n">b</span> <span class="o">-</span> <span class="n">a</span><span class="p">)</span> <span class="o">/</span> <span class="n">n</span>
-    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
-    <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">fnc</span><span class="p">(</span><span class="n">xi</span><span class="p">)</span> <span class="k">for</span> <span class="n">xi</span> <span class="ow">in</span> <span class="n">x</span><span class="p">])</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">float</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialise the integrator with a vectorised target function.</span>
 
-    <span class="c1"># Simpson&#39;s rule: h/3 * (y0 + 4*sum(odd) + 2*sum(even) + yn)</span>
-    <span class="n">integral</span> <span class="o">=</span> <span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">y</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-    <span class="n">integral</span> <span class="o">+=</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">])</span>
-    <span class="n">integral</span> <span class="o">+=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="mi">2</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">])</span>
-    <span class="n">integral</span> <span class="o">*=</span> <span class="n">h</span> <span class="o">/</span> <span class="mi">3</span>
+<span class="sd">        Args:</span>
+<span class="sd">            f (Callable): A vector-safe function accepting a float or a</span>
+<span class="sd">                NumPy array and returning an equivalent shape.</span>
 
-    <span class="k">return</span> <span class="n">integral</span></div>
+<span class="sd">        Raises:</span>
+<span class="sd">            TypeError: If the provided target function &#39;f&#39; is not a callable object.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;The target function &#39;f&#39; must be a callable object.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">f</span> <span class="o">=</span> <span class="n">f</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_eval_count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_eval_f</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Safely evaluate the target function and increment telemetry counters.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            x (float | np.ndarray): Input coordinate or array of coordinates</span>
+<span class="sd">                where the function should be evaluated.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            np.ndarray: Evaluated function values cast to a stable float64 array.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If the target function yields an infinite value, NaN element,</span>
+<span class="sd">                or encounters a structural coordinate singularity.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">x_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asanyarray</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_eval_count</span> <span class="o">+=</span> <span class="n">x_arr</span><span class="o">.</span><span class="n">size</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="p">(</span><span class="n">x_arr</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">res</span><span class="p">))</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">res</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Target function returned NaN or Inf. Structural singularity detected.&quot;</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">res</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_reset_telemetry</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reset internal tracking metrics prior to running an integration technique.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            None</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_eval_count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;function_evaluations&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s2">&quot;execution_time_seconds&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+            <span class="s2">&quot;max_recursion_depth&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s2">&quot;estimated_error&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+        <span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_bounds</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Enforce strict domain boundaries validation on input integration limits.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            a (float | np.ndarray): Lower bound(s) of the integration interval.</span>
+<span class="sd">            b (float | np.ndarray): Upper bound(s) of the integration interval.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            tuple[np.ndarray, np.ndarray]: Cleaned NumPy float64 tracking arrays</span>
+<span class="sd">                representing the verified lower and upper bounds.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If the provided bounds contain NaN values or infinite parameters</span>
+<span class="sd">                (unbounded calculations must use integrate_infinite instead).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">a_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asanyarray</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">b_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asanyarray</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">a_arr</span><span class="p">))</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">b_arr</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Integration boundaries cannot be NaN.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">a_arr</span><span class="p">))</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">b_arr</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Infinite boundaries detected. Use &#39;integrate_infinite&#39; for semi/unbounded integration.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">a_arr</span><span class="p">,</span> <span class="n">b_arr</span>
+
+<div class="viewcode-block" id="QuadratureIntegrator.trapezoidal">
+<a class="viewcode-back" href="../../../index.html#sciforge.integrate.quadrature.QuadratureIntegrator.trapezoidal">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">trapezoidal</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Evaluate the definite integral using the Composite Trapezoidal technique.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            a (float | np.ndarray): Lower integration limit(s).</span>
+<span class="sd">            b (float | np.ndarray): Upper integration limit(s).</span>
+<span class="sd">            n (int): Number of subintervals (panels) to divide the domain into.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float | np.ndarray: A scalar float if input boundaries are scalars, or a</span>
+<span class="sd">                NumPy array of matching dimension if vectorized arrays are provided.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If integration bounds contain illegal parameters, or if the</span>
+<span class="sd">                number of subintervals &#39;n&#39; is less than or equal to 0.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_reset_telemetry</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">integer</span><span class="p">))</span> <span class="ow">or</span> <span class="n">n</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Subintervals &#39;n&#39; must be a positive integer.&quot;</span><span class="p">)</span>
+
+        <span class="n">a_arr</span><span class="p">,</span> <span class="n">b_arr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_bounds</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+        <span class="n">max_ndim</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">a_arr</span><span class="o">.</span><span class="n">ndim</span><span class="p">,</span> <span class="n">b_arr</span><span class="o">.</span><span class="n">ndim</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">max_ndim</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">*</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_ndim</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">x</span> <span class="o">=</span> <span class="n">a_arr</span> <span class="o">+</span> <span class="n">t</span> <span class="o">*</span> <span class="p">(</span><span class="n">b_arr</span> <span class="o">-</span> <span class="n">a_arr</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eval_f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="p">(</span><span class="n">b_arr</span> <span class="o">-</span> <span class="n">a_arr</span><span class="p">)</span> <span class="o">/</span> <span class="n">n</span>
+
+        <span class="c1"># y[0] to add the scalar boundary correctly</span>
+        <span class="n">integral</span> <span class="o">=</span> <span class="p">(</span><span class="n">h</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">y</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;function_evaluations&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eval_count</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;execution_time_seconds&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">integral</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="n">integral</span><span class="p">,</span> <span class="s2">&quot;ndim&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">integral</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="k">else</span> <span class="n">integral</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="QuadratureIntegrator.simpsons">
+<a class="viewcode-back" href="../../../index.html#sciforge.integrate.quadrature.QuadratureIntegrator.simpsons">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">simpsons</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Evaluate the definite integral using the Composite Simpson&#39;s 1/3 technique.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            a (float | np.ndarray): Lower integration limit(s).</span>
+<span class="sd">            b (float | np.ndarray): Upper integration limit(s).</span>
+<span class="sd">            n (int): Number of subintervals (must be a positive even integer).</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float | np.ndarray: A scalar float if input boundaries are scalars, or a</span>
+<span class="sd">                NumPy array of matching dimension if vectorized arrays are provided.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If boundaries fail validation checks, or if subintervals &#39;n&#39;</span>
+<span class="sd">                is not a positive even integer value.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_reset_telemetry</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">integer</span><span class="p">))</span> <span class="ow">or</span> <span class="n">n</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">n</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Simpson&#39;s rule requires a positive even integer for &#39;n&#39;.&quot;</span><span class="p">)</span>
+
+        <span class="n">a_arr</span><span class="p">,</span> <span class="n">b_arr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_bounds</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+        <span class="n">max_ndim</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">a_arr</span><span class="o">.</span><span class="n">ndim</span><span class="p">,</span> <span class="n">b_arr</span><span class="o">.</span><span class="n">ndim</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">max_ndim</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">*</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_ndim</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">x</span> <span class="o">=</span> <span class="n">a_arr</span> <span class="o">+</span> <span class="n">t</span> <span class="o">*</span> <span class="p">(</span><span class="n">b_arr</span> <span class="o">-</span> <span class="n">a_arr</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eval_f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="p">(</span><span class="n">b_arr</span> <span class="o">-</span> <span class="n">a_arr</span><span class="p">)</span> <span class="o">/</span> <span class="n">n</span>
+
+        <span class="c1"># y[0] to ensure correct numeric shape matching</span>
+        <span class="n">integral</span> <span class="o">=</span> <span class="p">(</span><span class="n">h</span> <span class="o">/</span> <span class="mf">3.0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span>
+            <span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="o">+</span> <span class="mf">4.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="o">+</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="mi">2</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="o">+</span> <span class="n">y</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;function_evaluations&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eval_count</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;execution_time_seconds&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">integral</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="n">integral</span><span class="p">,</span> <span class="s2">&quot;ndim&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">integral</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="k">else</span> <span class="n">integral</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="QuadratureIntegrator.gauss_legendre">
+<a class="viewcode-back" href="../../../index.html#sciforge.integrate.quadrature.QuadratureIntegrator.gauss_legendre">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">gauss_legendre</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">deg</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Evaluate the definite integral using Gauss-Legendre Quadrature.</span>
+
+<span class="sd">        Calculates optimal nodes and weights dynamically via the Golub-Welsch symmetric tridiagonal</span>
+<span class="sd">        matrix eigenvalue solver. Exact for polynomials of degree 2N - 1 or less.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            a (float | np.ndarray): Lower integration limit(s).</span>
+<span class="sd">            b (float | np.ndarray): Upper integration limit(s).</span>
+<span class="sd">            deg (int): Polynomial degree specifying the number of quadrature nodes (N).</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float | np.ndarray: Calculated numerical integral approximation. Returns a scalar</span>
+<span class="sd">                float for scalar inputs, or a NumPy array if evaluating vector bounds.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If polynomial degree &#39;deg&#39; is not a strictly positive integer.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_reset_telemetry</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">deg</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">integer</span><span class="p">))</span> <span class="ow">or</span> <span class="n">deg</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Polynomial degree &#39;deg&#39; must be a positive integer.&quot;</span><span class="p">)</span>
+
+        <span class="n">a_arr</span><span class="p">,</span> <span class="n">b_arr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_bounds</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+        <span class="n">max_ndim</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">a_arr</span><span class="o">.</span><span class="n">ndim</span><span class="p">,</span> <span class="n">b_arr</span><span class="o">.</span><span class="n">ndim</span><span class="p">)</span>
+
+        <span class="n">i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">deg</span><span class="p">)</span>
+        <span class="n">beta</span> <span class="o">=</span> <span class="n">i</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">4.0</span> <span class="o">*</span> <span class="n">i</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">T</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">beta</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">beta</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">nodes</span><span class="p">,</span> <span class="n">evecs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigh</span><span class="p">(</span><span class="n">T</span><span class="p">)</span>
+        <span class="n">weights</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">evecs</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:]</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">max_ndim</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">shape_modifier</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">*</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_ndim</span><span class="p">)))</span>
+            <span class="n">nodes_grid</span> <span class="o">=</span> <span class="n">nodes</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">shape_modifier</span><span class="p">)</span>
+            <span class="n">weights_grid</span> <span class="o">=</span> <span class="n">weights</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">shape_modifier</span><span class="p">)</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">b_arr</span> <span class="o">-</span> <span class="n">a_arr</span><span class="p">)</span> <span class="o">*</span> <span class="n">nodes_grid</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">b_arr</span> <span class="o">+</span> <span class="n">a_arr</span><span class="p">)</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eval_f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+            <span class="n">integral</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">b_arr</span> <span class="o">-</span> <span class="n">a_arr</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">weights_grid</span> <span class="o">*</span> <span class="n">y</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">b_arr</span> <span class="o">-</span> <span class="n">a_arr</span><span class="p">)</span> <span class="o">*</span> <span class="n">nodes</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">b_arr</span> <span class="o">+</span> <span class="n">a_arr</span><span class="p">)</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eval_f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+            <span class="n">integral</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">b_arr</span> <span class="o">-</span> <span class="n">a_arr</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">weights</span> <span class="o">*</span> <span class="n">y</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;function_evaluations&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eval_count</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;execution_time_seconds&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">integral</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="n">integral</span><span class="p">,</span> <span class="s2">&quot;ndim&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">integral</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="k">else</span> <span class="n">integral</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="QuadratureIntegrator.adaptive_simpsons">
+<a class="viewcode-back" href="../../../index.html#sciforge.integrate.quadrature.QuadratureIntegrator.adaptive_simpsons">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">adaptive_simpsons</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span><span class="p">,</span> <span class="n">max_depth</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Evaluate the integral using a recursive Adaptive Simpson&#39;s technique.</span>
+
+<span class="sd">        Dynamically refines structural grid steps across specific sub-domains</span>
+<span class="sd">        where the target function experiences rapid spatial changes or high oscillations.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            a (float): Lower bound of the integration domain.</span>
+<span class="sd">            b (float): Upper bound of the integration domain.</span>
+<span class="sd">            tol (float): Local accuracy error tolerance threshold. Defaults to 1e-6.</span>
+<span class="sd">            max_depth (int): Maximum recursion depth ceiling to protect against infinite</span>
+<span class="sd">                subdivision loops. Defaults to 50.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float: The highly refined numerical integration solution value.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If input bounds are NaN/Inf, or if error tolerance &#39;tol&#39; or</span>
+<span class="sd">                &#39;max_depth&#39; are set to zero or a negative value.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_reset_telemetry</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">tol</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Error tolerance &#39;tol&#39; must be strictly positive.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">max_depth</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Maximum recursion depth &#39;max_depth&#39; must be a positive integer.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">a_val</span><span class="p">,</span> <span class="n">b_val</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">a_val</span><span class="p">)</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">b_val</span><span class="p">)</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">a_val</span><span class="p">)</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">b_val</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Invalid parameters passed. Adaptive integration requires fixed finite inputs.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">fa</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_eval_f</span><span class="p">(</span><span class="n">a_val</span><span class="p">))</span>
+        <span class="n">fb</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_eval_f</span><span class="p">(</span><span class="n">b_val</span><span class="p">))</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">a_val</span> <span class="o">+</span> <span class="n">b_val</span><span class="p">)</span>
+        <span class="n">fc</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_eval_f</span><span class="p">(</span><span class="n">c</span><span class="p">))</span>
+
+        <span class="n">s_initial</span> <span class="o">=</span> <span class="p">((</span><span class="n">b_val</span> <span class="o">-</span> <span class="n">a_val</span><span class="p">)</span> <span class="o">/</span> <span class="mf">6.0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">fa</span> <span class="o">+</span> <span class="mf">4.0</span> <span class="o">*</span> <span class="n">fc</span> <span class="o">+</span> <span class="n">fb</span><span class="p">)</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;max_depth_tracked&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;accumulated_error&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">}</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_adaptive_simpsons_step</span><span class="p">(</span>
+            <span class="n">a_val</span><span class="p">,</span> <span class="n">b_val</span><span class="p">,</span> <span class="n">tol</span><span class="p">,</span> <span class="n">s_initial</span><span class="p">,</span> <span class="n">fa</span><span class="p">,</span> <span class="n">fc</span><span class="p">,</span> <span class="n">fb</span><span class="p">,</span> <span class="n">max_depth</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">state</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;function_evaluations&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eval_count</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;max_recursion_depth&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s2">&quot;max_depth_tracked&quot;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;estimated_error&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s2">&quot;accumulated_error&quot;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;execution_time_seconds&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
+        <span class="k">return</span> <span class="n">result</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_adaptive_simpsons_step</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">a</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">b</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">s_whole</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">fa</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">fc</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">fb</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">max_depth</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">depth</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">state</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Internal recursive calculation step managing error budgeting and interval segmentation.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            a (float): Lower boundary coordinate of the targeted segment.</span>
+<span class="sd">            b (float): Upper boundary coordinate of the targeted segment.</span>
+<span class="sd">            tol (float): Segment error tolerance budget restriction.</span>
+<span class="sd">            s_whole (float): Coarse Simpson value over the total subinterval region.</span>
+<span class="sd">            fa (float): Cached function evaluation at lower bound a.</span>
+<span class="sd">            fc (float): Cached function evaluation at midpoint c.</span>
+<span class="sd">            fb (float): Cached function evaluation at upper bound b.</span>
+<span class="sd">            max_depth (int): Maximum depth configuration cap limit.</span>
+<span class="sd">            depth (int): Present structural iteration depth location index tracker.</span>
+<span class="sd">            state (dict): Reference tracking state dictionary holding telemetry accumulators.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float: Evaluated segment approximation adjusted with explicit Richardson Extrapolation.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">depth</span> <span class="o">&gt;</span> <span class="n">state</span><span class="p">[</span><span class="s2">&quot;max_depth_tracked&quot;</span><span class="p">]:</span>
+            <span class="n">state</span><span class="p">[</span><span class="s2">&quot;max_depth_tracked&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">depth</span>
+        <span class="k">if</span> <span class="n">depth</span> <span class="o">&gt;=</span> <span class="n">max_depth</span><span class="p">:</span>
+            <span class="n">state</span><span class="p">[</span><span class="s2">&quot;accumulated_error&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">s_whole</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">s_whole</span>
+
+        <span class="n">c</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">a</span> <span class="o">+</span> <span class="n">b</span><span class="p">)</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">b</span> <span class="o">-</span> <span class="n">a</span><span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">a</span> <span class="o">+</span> <span class="n">c</span><span class="p">)</span>
+        <span class="n">e</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">c</span> <span class="o">+</span> <span class="n">b</span><span class="p">)</span>
+
+        <span class="n">fd</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_eval_f</span><span class="p">(</span><span class="n">d</span><span class="p">))</span>
+        <span class="n">fe</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_eval_f</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+
+        <span class="n">s_left</span> <span class="o">=</span> <span class="p">(</span><span class="n">h</span> <span class="o">/</span> <span class="mf">6.0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">fa</span> <span class="o">+</span> <span class="mf">4.0</span> <span class="o">*</span> <span class="n">fd</span> <span class="o">+</span> <span class="n">fc</span><span class="p">)</span>
+        <span class="n">s_right</span> <span class="o">=</span> <span class="p">(</span><span class="n">h</span> <span class="o">/</span> <span class="mf">6.0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">fc</span> <span class="o">+</span> <span class="mf">4.0</span> <span class="o">*</span> <span class="n">fe</span> <span class="o">+</span> <span class="n">fb</span><span class="p">)</span>
+        <span class="n">s_combined</span> <span class="o">=</span> <span class="n">s_left</span> <span class="o">+</span> <span class="n">s_right</span>
+
+        <span class="n">error</span> <span class="o">=</span> <span class="n">s_combined</span> <span class="o">-</span> <span class="n">s_whole</span>
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">error</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mf">15.0</span> <span class="o">*</span> <span class="n">tol</span><span class="p">:</span>
+            <span class="n">state</span><span class="p">[</span><span class="s2">&quot;accumulated_error&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">error</span><span class="p">)</span> <span class="o">/</span> <span class="mf">15.0</span>
+            <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">s_combined</span> <span class="o">+</span> <span class="n">error</span> <span class="o">/</span> <span class="mf">15.0</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_adaptive_simpsons_step</span><span class="p">(</span>
+            <span class="n">a</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">tol</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span> <span class="n">s_left</span><span class="p">,</span> <span class="n">fa</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="n">fc</span><span class="p">,</span> <span class="n">max_depth</span><span class="p">,</span> <span class="n">depth</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">state</span>
+        <span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_adaptive_simpsons_step</span><span class="p">(</span>
+            <span class="n">c</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">tol</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span> <span class="n">s_right</span><span class="p">,</span> <span class="n">fc</span><span class="p">,</span> <span class="n">fe</span><span class="p">,</span> <span class="n">fb</span><span class="p">,</span> <span class="n">max_depth</span><span class="p">,</span> <span class="n">depth</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">state</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="QuadratureIntegrator.clenshaw_curtis">
+<a class="viewcode-back" href="../../../index.html#sciforge.integrate.quadrature.QuadratureIntegrator.clenshaw_curtis">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clenshaw_curtis</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Evaluate the definite integral using the Clenshaw-Curtis technique.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            a (float | np.ndarray): Lower integration limit(s).</span>
+<span class="sd">            b (float | np.ndarray): Upper integration limit(s).</span>
+<span class="sd">            n (int): Number of nodes representing polynomial interpolation depth order.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float | np.ndarray: Mapped integration output array matching input dimension configurations.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If node resolution value &#39;n&#39; is not a strictly positive integer.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_reset_telemetry</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">integer</span><span class="p">))</span> <span class="ow">or</span> <span class="n">n</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Node limit &#39;n&#39; must be a positive integer.&quot;</span><span class="p">)</span>
+
+        <span class="n">a_arr</span><span class="p">,</span> <span class="n">b_arr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_bounds</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+        <span class="n">max_ndim</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">a_arr</span><span class="o">.</span><span class="n">ndim</span><span class="p">,</span> <span class="n">b_arr</span><span class="o">.</span><span class="n">ndim</span><span class="p">)</span>
+
+        <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">n</span>
+        <span class="n">nodes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+
+        <span class="n">weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span>
+            <span class="n">v</span> <span class="o">-=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">k</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="n">k</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">n</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">v</span> <span class="o">-=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">n</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="n">n</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span>
+
+        <span class="n">weights</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">v</span> <span class="o">/</span> <span class="n">n</span>
+        <span class="n">endpoint_val</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="n">n</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="k">if</span> <span class="n">n</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">n</span><span class="o">**</span><span class="mi">2</span>
+
+        <span class="c1"># Target individual indices to preserve array mutations</span>
+        <span class="n">weights</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">endpoint_val</span>
+        <span class="n">weights</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">endpoint_val</span>
+
+        <span class="k">if</span> <span class="n">max_ndim</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">shape_modifier</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">*</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_ndim</span><span class="p">)))</span>
+            <span class="n">nodes_grid</span> <span class="o">=</span> <span class="n">nodes</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">shape_modifier</span><span class="p">)</span>
+            <span class="n">weights_grid</span> <span class="o">=</span> <span class="n">weights</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">shape_modifier</span><span class="p">)</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">b_arr</span> <span class="o">-</span> <span class="n">a_arr</span><span class="p">)</span> <span class="o">*</span> <span class="n">nodes_grid</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">b_arr</span> <span class="o">+</span> <span class="n">a_arr</span><span class="p">)</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eval_f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+            <span class="n">integral</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">b_arr</span> <span class="o">-</span> <span class="n">a_arr</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">weights_grid</span> <span class="o">*</span> <span class="n">y</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">b_arr</span> <span class="o">-</span> <span class="n">a_arr</span><span class="p">)</span> <span class="o">*</span> <span class="n">nodes</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">b_arr</span> <span class="o">+</span> <span class="n">a_arr</span><span class="p">)</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eval_f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+            <span class="n">integral</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">b_arr</span> <span class="o">-</span> <span class="n">a_arr</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">weights</span> <span class="o">*</span> <span class="n">y</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;function_evaluations&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eval_count</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;execution_time_seconds&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">integral</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="n">integral</span><span class="p">,</span> <span class="s2">&quot;ndim&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">integral</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="k">else</span> <span class="n">integral</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="QuadratureIntegrator.integrate_infinite">
+<a class="viewcode-back" href="../../../index.html#sciforge.integrate.quadrature.QuadratureIntegrator.integrate_infinite">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">integrate_infinite</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;gauss_legendre&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Evaluate improper integrals over semi-infinite or infinite domain fields.</span>
+
+<span class="sd">        Leverages adaptive change-of-variable coordinate mappings to condense unbounded endpoints into</span>
+<span class="sd">        a closed, finite integration landscape smoothly.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            a (float): Lower integration boundary limit (can set explicitly to -np.inf).</span>
+<span class="sd">            b (float): Upper integration boundary limit (can set explicitly to np.inf).</span>
+<span class="sd">            method (str): Name string selector referencing target execution technique. Defaults to &quot;gauss_legendre&quot;.</span>
+<span class="sd">            **kwargs: Configuration flags and hyper-parameters passed downstream to backend runners.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float | np.ndarray: Evaluated numerical result over the mapped continuous domain.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If both bounds are finite numbers, or range sequencing directions are mismatched.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_reset_telemetry</span><span class="p">()</span>
+
+        <span class="n">original_f</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">f</span>
+        <span class="n">inf_a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+        <span class="n">inf_b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">inf_a</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">inf_b</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Both limits are finite. Use standard methods instead.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">inf_a</span> <span class="ow">and</span> <span class="n">inf_b</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">a</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">b</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Infinite range sequence alignment mismatch.&quot;</span><span class="p">)</span>
+            <span class="n">transformed_f</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="p">(</span>  <span class="c1"># noqa: E731</span>
+                <span class="n">original_f</span><span class="p">(</span><span class="n">t</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">t</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">t</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">t</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+            <span class="p">)</span>
+            <span class="n">target_a</span><span class="p">,</span> <span class="n">target_b</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span> <span class="o">+</span> <span class="mf">1e-15</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="mf">1e-15</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="n">inf_a</span> <span class="ow">and</span> <span class="n">inf_b</span><span class="p">:</span>
+            <span class="n">transformed_f</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="p">(</span>  <span class="c1"># noqa: E731</span>
+                <span class="n">original_f</span><span class="p">(</span><span class="n">a</span> <span class="o">+</span> <span class="n">t</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">t</span><span class="p">))</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">t</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">target_a</span><span class="p">,</span> <span class="n">target_b</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="mf">1e-15</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">transformed_f</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">original_f</span><span class="p">(</span><span class="n">b</span> <span class="o">-</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">t</span><span class="p">)</span> <span class="o">/</span> <span class="n">t</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">t</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># noqa: E731</span>
+            <span class="n">target_a</span><span class="p">,</span> <span class="n">target_b</span> <span class="o">=</span> <span class="mf">0.0</span> <span class="o">+</span> <span class="mf">1e-15</span><span class="p">,</span> <span class="mf">1.0</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">f</span> <span class="o">=</span> <span class="n">transformed_f</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">runner</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">method</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;gauss_legendre&quot;</span><span class="p">,</span> <span class="s2">&quot;clenshaw_curtis&quot;</span><span class="p">]</span>
+                <span class="ow">and</span> <span class="s2">&quot;deg&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span>
+                <span class="ow">and</span> <span class="s2">&quot;n&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span>
+            <span class="p">):</span>
+                <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;deg&quot;</span> <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;gauss_legendre&quot;</span> <span class="k">else</span> <span class="s2">&quot;n&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">50</span>
+            <span class="k">elif</span> <span class="n">method</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;simpsons&quot;</span><span class="p">,</span> <span class="s2">&quot;trapezoidal&quot;</span><span class="p">]</span> <span class="ow">and</span> <span class="s2">&quot;n&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+                <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;n&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">100</span>
+
+            <span class="n">res</span> <span class="o">=</span> <span class="n">runner</span><span class="p">(</span><span class="n">target_a</span><span class="p">,</span> <span class="n">target_b</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">f</span> <span class="o">=</span> <span class="n">original_f</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;execution_time_seconds&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
+        <span class="k">return</span> <span class="n">res</span></div>
+
+
+<div class="viewcode-block" id="QuadratureIntegrator.tanh_sinh">
+<a class="viewcode-back" href="../../../index.html#sciforge.integrate.quadrature.QuadratureIntegrator.tanh_sinh">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">tanh_sinh</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-9</span><span class="p">,</span> <span class="n">max_level</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">6</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Evaluate functions using the Tanh-Sinh Double Exponential quadrature technique.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            a (float): Lower bounding tracking index coordinate.</span>
+<span class="sd">            b (float): Upper bounding tracking index coordinate.</span>
+<span class="sd">            tol (float): Targeted precision error budget threshold convergence floor. Defaults to 1e-9.</span>
+<span class="sd">            max_level (int): Maximum geometric loop generation slicing depth steps. Defaults to 6.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float: Highly resolved numerical evaluation calculation output.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If accuracy convergence budget parameters evaluate below zero thresholds.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_reset_telemetry</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">tol</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Tolerance targets must evaluate positively.&quot;</span><span class="p">)</span>
+
+        <span class="n">scale_diff</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">b</span> <span class="o">-</span> <span class="n">a</span><span class="p">)</span>
+        <span class="n">scale_sum</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">b</span> <span class="o">+</span> <span class="n">a</span><span class="p">)</span>
+        <span class="n">previous_integral</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">integral</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+        <span class="k">for</span> <span class="n">level</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_level</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">h</span> <span class="o">=</span> <span class="mf">0.5</span><span class="o">**</span><span class="n">level</span>
+            <span class="c1"># Generate points spanning outward across the functional landscape mapping limit</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="mf">6.0</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
+
+            <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">over</span><span class="o">=</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="n">invalid</span><span class="o">=</span><span class="s2">&quot;ignore&quot;</span><span class="p">):</span>
+                <span class="n">sinh_t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sinh</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+                <span class="n">cosh_t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cosh</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+                <span class="n">arg</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">sinh_t</span>
+
+                <span class="n">valid_mask</span> <span class="o">=</span> <span class="n">arg</span> <span class="o">&lt;</span> <span class="mi">200</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">valid_mask</span><span class="p">):</span>
+                    <span class="k">continue</span>
+
+                <span class="n">t</span> <span class="o">=</span> <span class="n">t</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]</span>
+                <span class="n">sinh_t</span> <span class="o">=</span> <span class="n">sinh_t</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]</span>
+                <span class="n">cosh_t</span> <span class="o">=</span> <span class="n">cosh_t</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]</span>
+                <span class="n">arg</span> <span class="o">=</span> <span class="n">arg</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]</span>
+
+                <span class="n">tanh_arg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+                <span class="n">w</span> <span class="o">=</span> <span class="n">scale_diff</span> <span class="o">*</span> <span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">cosh_t</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cosh</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+
+            <span class="n">x_pts_pos</span> <span class="o">=</span> <span class="n">scale_sum</span> <span class="o">+</span> <span class="n">scale_diff</span> <span class="o">*</span> <span class="n">tanh_arg</span>
+            <span class="n">x_pts_neg</span> <span class="o">=</span> <span class="n">scale_sum</span> <span class="o">-</span> <span class="n">scale_diff</span> <span class="o">*</span> <span class="n">tanh_arg</span>
+
+            <span class="c1"># Base midpoint evaluation at t=0</span>
+            <span class="n">total_sum</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_eval_f</span><span class="p">(</span><span class="n">scale_sum</span><span class="p">))</span> <span class="o">*</span> <span class="p">(</span><span class="n">scale_diff</span> <span class="o">*</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+
+            <span class="c1"># Enforce calculations strictly inside the open boundary constraints</span>
+            <span class="n">pos_mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">x_pts_pos</span> <span class="o">&gt;</span> <span class="n">a</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">x_pts_pos</span> <span class="o">&lt;</span> <span class="n">b</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">w</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">w</span> <span class="o">&gt;</span> <span class="mf">1e-15</span><span class="p">)</span>
+            <span class="n">neg_mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">x_pts_neg</span> <span class="o">&gt;</span> <span class="n">a</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">x_pts_neg</span> <span class="o">&lt;</span> <span class="n">b</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">w</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">w</span> <span class="o">&gt;</span> <span class="mf">1e-15</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">pos_mask</span><span class="p">):</span>
+                <span class="n">total_sum</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_eval_f</span><span class="p">(</span><span class="n">x_pts_pos</span><span class="p">[</span><span class="n">pos_mask</span><span class="p">])</span> <span class="o">*</span> <span class="n">w</span><span class="p">[</span><span class="n">pos_mask</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">neg_mask</span><span class="p">):</span>
+                <span class="n">total_sum</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_eval_f</span><span class="p">(</span><span class="n">x_pts_neg</span><span class="p">[</span><span class="n">neg_mask</span><span class="p">])</span> <span class="o">*</span> <span class="n">w</span><span class="p">[</span><span class="n">neg_mask</span><span class="p">])</span>
+
+            <span class="n">integral</span> <span class="o">=</span> <span class="n">h</span> <span class="o">*</span> <span class="n">total_sum</span>
+
+            <span class="k">if</span> <span class="n">level</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="ow">and</span> <span class="nb">abs</span><span class="p">(</span><span class="n">integral</span> <span class="o">-</span> <span class="n">previous_integral</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">tol</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="n">previous_integral</span> <span class="o">=</span> <span class="n">integral</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;function_evaluations&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eval_count</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;execution_time_seconds&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">integral</span><span class="p">)</span></div>
+</div>
 
 </pre></div>
 
