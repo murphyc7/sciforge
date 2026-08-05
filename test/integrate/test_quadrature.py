@@ -38,6 +38,7 @@ def test_singularity_and_nan_detection() -> None:
     with pytest.raises(ValueError, match="singularity detected"):
         integrator.trapezoidal(0.0, 2.0, n=10)
 
+
 def test_validate_bounds_exceptions() -> None:
     """Asserts that _validate_bounds() successfully intercepts and blocks
     invalid, infinite, or non-numeric (NaN) domain parameters.

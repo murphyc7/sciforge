@@ -44,6 +44,7 @@ class ConstantFieldPhysics(BasePhysicsSolver):
         diffusion_coeff (float): Diffusion coefficient in :math:`\text{m}^2/\text{s}`.
         electric_field (float): Applied background uniform electric field in V/m.
     """  # noqa: W605
+
     def __init__(
         self, effective_mass: float, permittivity: float, electric_field: float = 1.0e3
     ) -> None:
@@ -156,16 +157,23 @@ class PoissonCoupledPhysics(BasePhysicsSolver):
             donor_doping (float, optional): Background uniform ionized donor concentration in
                 :math:`\text{m}^{-3}`. Defaults to 1.0e22.
         """
+        # Scaling parameters
+        self.L_scale = 1.0e-6  # 1 micron scaling factor
+        self.N_scale = 1.0e22  # 1e22 m^-3 carrier scaling factor
+
+        # Physical parameters
         self.q = 1.602e-19
         self.kb_t = 0.0259 * self.q
         self.eps0 = 8.854e-12
         self.eps_r = permittivity
-        self.nd = donor_doping
+        self.nd_scaled = (
+            donor_doping / self.N_scale
+        )  # Background uniform doping scaled to 1.0
         self.mobility = 0.14 / (effective_mass + 1e-8)
         self.diffusion_coeff = self.mobility * (self.kb_t / self.q)
 
     def compute_residuals(
-        self, x: torch.Tensor, model: torch.nn.Module
+        self, x_scaled: torch.Tensor, model: torch.nn.Module
     ) -> dict[str, torch.Tensor]:
         """Calculates independent residuals for both the Poisson and Transport loops.
 
@@ -173,7 +181,7 @@ class PoissonCoupledPhysics(BasePhysicsSolver):
         potentials, and tracks gradients using the autograd computational history graph.
 
         Args:
-            x (torch.Tensor): Spatial coordinate tracking grid of shape `[Batch Size, 1]`.
+            x_scaled (torch.Tensor): Scaled spatial coordinate tracking grid of shape `[Batch Size, 1]`.
             model (nn.Module): Neural network tracking multi-variable outputs where channel 0
                 maps to carrier density :math:`n(x)` and channel 1 maps to potential :math:`\phi(x)`.
 
@@ -182,30 +190,49 @@ class PoissonCoupledPhysics(BasePhysicsSolver):
                 - "poisson": Electrostatic residual tensor of shape `[Batch Size, 1]`.
                 - "transport": Coupled drift-diffusion conservation tensor of shape `[Batch Size, 1]`.
         """  # noqa: W605
-        x.requires_grad_(True)
-        predictions = model(x)
+        x_scaled.requires_grad_(True)
+        predictions = model(x_scaled)
 
-        n = predictions[:, 0:1]
+        n_scaled = predictions[:, 0:1]
         phi = predictions[:, 1:2]
 
         dn_dx = torch.autograd.grad(
-            n, x, torch.ones_like(n), create_graph=True, retain_graph=True
+            n_scaled,
+            x_scaled,
+            torch.ones_like(n_scaled),
+            create_graph=True,
+            retain_graph=True,
         )[0]
         dphi_dx = torch.autograd.grad(
-            phi, x, torch.ones_like(phi), create_graph=True, retain_graph=True
+            phi, x_scaled, torch.ones_like(phi), create_graph=True, retain_graph=True
         )[0]
 
         d2n_dx2 = torch.autograd.grad(
-            dn_dx, x, torch.ones_like(dn_dx), create_graph=True, retain_graph=True
+            dn_dx,
+            x_scaled,
+            torch.ones_like(dn_dx),
+            create_graph=True,
+            retain_graph=True,
         )[0]
         d2phi_dx2 = torch.autograd.grad(
-            dphi_dx, x, torch.ones_like(dphi_dx), create_graph=True, retain_graph=True
+            dphi_dx,
+            x_scaled,
+            torch.ones_like(dphi_dx),
+            create_graph=True,
+            retain_graph=True,
         )[0]
 
-        permittivity_factor = self.eps0 * self.eps_r
-        poisson_residual = d2phi_dx2 + (self.q / permittivity_factor) * (self.nd - n)
+        # Scaled Equation 1: Poisson Residual
+        # d2phi/dx^2 + L^2 * (q * N_scale / eps) * (Nd - n) = 0
+        poisson_constant = (
+            (self.L_scale**2) * (self.q * self.N_scale) / (self.eps0 * self.eps_r)
+        )
+        poisson_residual = d2phi_dx2 + poisson_constant * (self.nd_scaled - n_scaled)
 
-        drift_term = self.mobility * (-dphi_dx * dn_dx - d2phi_dx2 * n)
+        # Scaled Equation 2: Transport Residual
+        # Dn * d2n/dx^2 - mu * dphi/dx * dn/dx - mu * d2phi/dx^2 * n = 0
+        # Multiplied by L_scale^2 to match the matrix order of dimensions
+        drift_term = self.mobility * (-dphi_dx * dn_dx - d2phi_dx2 * n_scaled)
         diffusion_term = self.diffusion_coeff * d2n_dx2
         transport_residual = diffusion_term + drift_term
 

@@ -6,10 +6,10 @@ import sys
 ############################################################
 
 # Project information
-project = 'SciForge'
-copyright = '2026, Conal Murphy'
-author = 'Conal Murphy'
-release = '0.1.0'
+project = "SciForge"
+copyright = "2026, Conal Murphy"
+author = "Conal Murphy"
+release = "0.1.0"
 
 # Point Sphinx directly to absolute source directory layout
 sys.path.insert(0, os.path.abspath("../../src"))

@@ -15,7 +15,7 @@ from sciforge.matkit.carrier_pinn.physics import (
 
 def test_carrier_pinn_scales_output_channels_dynamically() -> None:
     """Verifies that the network layer scales its output shape based on output_dim configurations."""
-    # Arrange: Initialize models mirroring both constant and coupled simulation requirements
+    # Arrange: Initialise models mirroring both constant and coupled simulation requirements
     model_constant = CarrierPINN(input_dim=1, output_dim=1, hidden_dim=16)
     model_coupled = CarrierPINN(input_dim=1, output_dim=2, hidden_dim=16)
 
