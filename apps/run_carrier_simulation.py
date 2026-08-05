@@ -7,7 +7,10 @@ import torch
 import torch.nn as nn
 
 from sciforge.matkit.carrier_pinn.models import CarrierPINN
-from sciforge.matkit.carrier_pinn.physics import DriftDiffusionPhysics
+from sciforge.matkit.carrier_pinn.physics import (
+    ConstantFieldPhysics,  # noqa: F401
+    PoissonCoupledPhysics,
+)
 from sciforge.matkit.utils.db_client import DatabaseClient, MaterialModel
 
 logging.basicConfig(
@@ -42,21 +45,21 @@ def main() -> None:
 
     logger.info(f"Loaded constraints for {formula}: m*={m_eff}, eps={eps}")
 
-    # Step 2: Initialise PyTorch SciML Models
+    # Step 2: Initialise PyTorch models
     model = CarrierPINN()
-    physics_engine = DriftDiffusionPhysics(effective_mass=m_eff, permittivity=eps)
+    physics_engine = PoissonCoupledPhysics(effective_mass=m_eff, permittivity=eps)
     optimiser = torch.optim.Adam(model.parameters(), lr=1e-3)
     mse_criterion = nn.MSELoss()
 
     # Step 3: Define spatial boundary grid (x scaled from 0.0 to 1.0 micron)
-    x_interior = torch.linspace(0.0, 1.0, 100, dtype=torch.float32).view(-1, 1)
+    x_interior = torch.linspace(0.0, 1.0e-6, 120, dtype=torch.float32).view(-1, 1)
 
     # Set hard Dirichlet Boundary Conditions: n(0) = 1.0, n(1) = 0.0
     x_boundary_left = torch.tensor([[0.0]], dtype=torch.float32)
-    n_boundary_left = torch.tensor([[1.0]], dtype=torch.float32)
+    n_boundary_left = torch.tensor([[1.0e22, 0.0]], dtype=torch.float32)
 
-    x_boundary_right = torch.tensor([[1.0]], dtype=torch.float32)
-    n_boundary_right = torch.tensor([[0.0]], dtype=torch.float32)
+    x_boundary_right = torch.tensor([[1.0e-6]], dtype=torch.float32)
+    n_boundary_right = torch.tensor([[1.0e21, 0.5]], dtype=torch.float32)
 
     logger.info("Starting Physics-Informed Neural Network optimisation loop...")
 
@@ -72,8 +75,10 @@ def main() -> None:
         )
 
         # Evaluate internal PDE constraint mismatch (Physics Loss)
-        pde_residual = physics_engine.compute_pde_residual(x_interior, model)
-        loss_physics = mse_criterion(pde_residual, torch.zeros_like(pde_residual))
+        pde_residual, t_residual = physics_engine.compute_residuals(x_interior, model)
+        loss_physics = mse_criterion(
+            pde_residual, torch.zeros_like(pde_residual)
+        ) + mse_criterion(t_residual, torch.zeros_like(t_residual))
 
         # Combined loss structure
         total_loss = loss_boundary + loss_physics
@@ -82,8 +87,8 @@ def main() -> None:
 
         if epoch % 100 == 0:
             logger.info(
-                f"Epoch {epoch:04d} | Total Loss: {total_loss.item():.6f} | "
-                f"Boundary Loss: {loss_boundary.item():.6f} | Physics Loss: {loss_physics.item():.6f}"
+                f"Epoch {epoch:04d} | Total Loss: {total_loss.item():.4e} | "
+                f"Boundary Loss: {loss_boundary.item():.4e} | Physics Loss: {loss_physics.item():.4e}"
             )
 
 

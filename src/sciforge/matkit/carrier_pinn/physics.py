@@ -181,7 +181,7 @@ class PoissonCoupledPhysics(BasePhysicsSolver):
             dict[str, torch.Tensor]: Dictionary containing two keys:
                 - "poisson": Electrostatic residual tensor of shape `[Batch Size, 1]`.
                 - "transport": Coupled drift-diffusion conservation tensor of shape `[Batch Size, 1]`.
-        """
+        """  # noqa: W605
         x.requires_grad_(True)
         predictions = model(x)
 
