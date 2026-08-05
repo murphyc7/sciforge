@@ -7,7 +7,10 @@ import torch
 import torch.nn as nn
 
 from sciforge.matkit.carrier_pinn.models import CarrierPINN
-from sciforge.matkit.carrier_pinn.physics import DriftDiffusionPhysics
+from sciforge.matkit.carrier_pinn.physics import (
+    ConstantFieldPhysics,
+    PoissonCoupledPhysics,
+)
 from sciforge.matkit.utils.db_client import DatabaseClient, MaterialModel
 
 logging.basicConfig(
@@ -22,9 +25,15 @@ def main() -> None:
         "--material-id", type=str, default="mp-100", help="Target Material ID"
     )
     parser.add_argument("--epochs", type=int, default=500, help="Optimisation steps")
+    parser.add_argument(
+        "--engine",
+        type=str,
+        choices=["constant", "coupled"],
+        default="constant",
+        help="Physics mode selector",
+    )
     args = parser.parse_args()
 
-    # Step 1: Query material metrics from PostgreSQL
     db_client = DatabaseClient()
     with db_client.get_session() as session:
         material = (
@@ -40,50 +49,62 @@ def main() -> None:
         eps = material.permittivity
         formula = material.formula
 
-    logger.info(f"Loaded constraints for {formula}: m*={m_eff}, eps={eps}")
+    logger.info(
+        f"Loaded constraints for {formula}: m*={m_eff}, eps={eps} | Engine: {args.engine.upper()}"
+    )
 
-    # Step 2: Initialise PyTorch SciML Models
-    model = CarrierPINN()
-    physics_engine = DriftDiffusionPhysics(effective_mass=m_eff, permittivity=eps)
+    # Both models now receive a stable spatial coordinate grid scaled between 0.0 and 1.0
+    x_interior = torch.linspace(0.0, 1.0, 100, dtype=torch.float32).view(-1, 1)
+    x_boundary_left = torch.tensor([[0.0]], dtype=torch.float32)
+    x_boundary_right = torch.tensor([[1.0]], dtype=torch.float32)
+
+    if args.engine == "constant":
+        model = CarrierPINN(output_dim=1)
+        physics_engine = ConstantFieldPhysics(effective_mass=m_eff, permittivity=eps)
+        n_boundary_left = torch.tensor([[1.0]], dtype=torch.float32)
+        n_boundary_right = torch.tensor([[0.0]], dtype=torch.float32)
+    else:
+        model = CarrierPINN(output_dim=2)
+        physics_engine = PoissonCoupledPhysics(effective_mass=m_eff, permittivity=eps)
+        # Normalized boundaries matching our 1.0 scaling factor rules
+        n_boundary_left = torch.tensor(
+            [[1.0, 0.0]], dtype=torch.float32
+        )  # n=1.0, phi=0.0V
+        n_boundary_right = torch.tensor(
+            [[0.1, 0.5]], dtype=torch.float32
+        )  # n=0.1, phi=0.5V
+
     optimiser = torch.optim.Adam(model.parameters(), lr=1e-3)
     mse_criterion = nn.MSELoss()
 
-    # Step 3: Define spatial boundary grid (x scaled from 0.0 to 1.0 micron)
-    x_interior = torch.linspace(0.0, 1.0, 100, dtype=torch.float32).view(-1, 1)
-
-    # Set hard Dirichlet Boundary Conditions: n(0) = 1.0, n(1) = 0.0
-    x_boundary_left = torch.tensor([[0.0]], dtype=torch.float32)
-    n_boundary_left = torch.tensor([[1.0]], dtype=torch.float32)
-
-    x_boundary_right = torch.tensor([[1.0]], dtype=torch.float32)
-    n_boundary_right = torch.tensor([[0.0]], dtype=torch.float32)
-
     logger.info("Starting Physics-Informed Neural Network optimisation loop...")
 
-    # Step 4: Training Loop
     for epoch in range(args.epochs + 1):
         optimiser.zero_grad()
 
-        # Evaluate structural boundary mismatch (Data Loss)
-        pred_left = model(x_boundary_left)
-        pred_right = model(x_boundary_right)
-        loss_boundary = mse_criterion(pred_left, n_boundary_left) + mse_criterion(
-            pred_right, n_boundary_right
-        )
+        # 1. Evaluate boundary mismatch
+        loss_bc = mse_criterion(
+            model(x_boundary_left), n_boundary_left
+        ) + mse_criterion(model(x_boundary_right), n_boundary_right)
 
-        # Evaluate internal PDE constraint mismatch (Physics Loss)
-        pde_residual = physics_engine.compute_pde_residual(x_interior, model)
-        loss_physics = mse_criterion(pde_residual, torch.zeros_like(pde_residual))
+        # 2. Compute stable scaled residuals
+        residuals_dict = physics_engine.compute_residuals(x_interior, model)
 
-        # Combined loss structure
-        total_loss = loss_boundary + loss_physics
+        loss_physics = 0.0
+        for key, res in residuals_dict.items():
+            if key == "poisson":
+                # Scale Poisson loss slightly to balance with the transport gradients
+                loss_physics += mse_criterion(res * 1.0e-3, torch.zeros_like(res))
+            else:
+                loss_physics += mse_criterion(res, torch.zeros_like(res))
+
+        total_loss = loss_bc + loss_physics
         total_loss.backward()
         optimiser.step()
 
         if epoch % 100 == 0:
             logger.info(
-                f"Epoch {epoch:04d} | Total Loss: {total_loss.item():.6f} | "
-                f"Boundary Loss: {loss_boundary.item():.6f} | Physics Loss: {loss_physics.item():.6f}"
+                f"Epoch {epoch:04d} | Total Loss: {total_loss.item():.4e} | BC Mismatch: {loss_bc.item():.4e}"
             )
 
 

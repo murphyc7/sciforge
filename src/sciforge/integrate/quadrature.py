@@ -1,5 +1,4 @@
-"""Quadrature numerical integration techniques.
-"""
+"""Quadrature numerical integration techniques."""
 
 import time
 from collections.abc import Callable
@@ -232,7 +231,7 @@ class QuadratureIntegrator:
 
         i = np.arange(1, deg)
         beta = i / np.sqrt(4.0 * i**2 - 1.0)
-        T = np.diag(beta, 1) + np.diag(beta, -1)
+        T = np.diag(beta, 1) + np.diag(beta, -1)  # noqa: N806
 
         nodes, evecs = np.linalg.eigh(T)
         weights = 2.0 * (evecs[0, :] ** 2)
