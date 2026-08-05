@@ -22,27 +22,44 @@ The MatKit aspect of the platform is designed around a decoupled, pipeline-centr
                                                                             │
 ┌────────────────────────┐      ┌────────────────────────┐                  │
 │   Production-Ready     │ <─── │   Carrier PINN Engine  │ <────────────────┘
-│   Material Insights    │      │ (PyTorch Autograd PDE) │
+│   Material Insights    │      │ (Multi-Engine Factory) │
 └────────────────────────┘      └────────────────────────┘
 ```
 
 1. **Data Ingestion**: A decoupled ETL pipeline pulls structural material records, extracts semi-structured profiles, and targets them into a normalised storage infrastructure.
 2. **Relational Data Management**: An object-relational mapping (ORM) layer maps parameters (such as effective mass $m^*$ and permittivity $\epsilon$) directly into localised database systems.
 3. **Statistical Modeling**: An unsupervised learning engine standardises feature variance metrics and partitions materials using K-Means grouping.
-4. **Simulation Solver**: A Multi-Layer Perceptron (MLP) dynamically fetches database records, updates loss functions based on physical boundary parameters, and tracks gradients via autograd to solve transport equations.
+4. **Simulation Solver**: A Multi-Layer Perceptron (MLP) dynamically fetches database records, updates loss functions based on physical boundary parameters, and tracks gradients via autograd to solve transport equations. Selects an interchangeable physics solver backend via runtime flags.
 
 ---
 
 ## MatKit Physics Formulations
 
-The PINN engine solves the steady-state **1D Drift-Diffusion continuity equation** for charge carrier transport under an applied constant electric field ($E$):
+The PINN engine supports two distinct, interchangeable physics solver backends via a unified `BasePhysicsSolver` abstract interface:
+
+### 1. Constant Field Engine (`--engine constant`)
+Solves the steady-state 1D Drift-Diffusion current continuity equation under an applied, uniform background electric field ($E$):
 
 $$\mathcal{R}(x) = D_n \frac{d^2n}{dx^2} + \mu_n E \frac{dn}{dx} - R(x) = 0$$
+
+### 2. Self-Consistent Coupled Poisson Engine (`--engine coupled`)
+Solves a tightly coupled, highly non-linear multi-field system to resolve the internal electrostatic potential ($\phi$) alongside shifting charge densities ($n$) simultaneously:
+
+$$\mathcal{R}_{\text{poisson}}(x) = \frac{d^2\phi}{dx^2} + \frac{q}{\epsilon_0 \epsilon_r} \left( N_D^+ - n(x) \right) = 0$$
+
+$$\mathcal{R}_{\text{transport}}(x) = D_n \frac{d^2n}{dx^2} + \mu_n \left(-\frac{d\phi}{dx}\right) \frac{dn}{dx} + \mu_n \left(-\frac{d^2\phi}{dx^2}\right)n(x) = 0$$
 
 Where:
 * **Mobility Scaling**: Material mobility scales dynamically based on physical constraints fetched from your database: $\mu_n = \frac{0.14}{m^*}$.
 * **Einstein Relation**: The diffusion coefficient is directly linked to the computed mobility via: $D_n = \mu_n \frac{k_B T}{q}$.
 * **Loss Optimisation**: Network parameters are updated by minimising a joint loss metric combining hard Dirichlet edge mismatches with internal PDE structural residuals: $`\mathcal{L}_{\text{total}} = \mathcal{L}_{\text{boundary}} + \mathcal{L}_{\text{physics}}`$.
+
+### Numerical Non-Dimensionalisation
+To protect the PyTorch network graph from immediate gradient explosions ($inf$ and $nan$ losses caused by comparing micro-scale distances $10^{-6}\text{ m}$ against macro-scale carrier densities $10^{22}\text{ m}^{-3}$), the system operates entirely within a normalised mathematical scaling space:
+* **Spatial Normalisation**: Coordinates are scaled where $1.0 \text{ unit} = 1.0 \times 10^{-6} \text{ m}$ (1 micron device length).
+* **Density Normalisation**: Concentration values are mapped where $1.0 \text{ unit} = 1.0 \times 10^{22} \text{ m}^{-3}$.
+
+The physics solver calculates derivatives on this stable 0.0 to 1.0 grid, balancing the underlying constants internally to keep loss metrics near order-of-magnitude $\sim 1.0$.
 
 ---
 
