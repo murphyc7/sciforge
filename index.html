@@ -16,6 +16,7 @@
       <script src="_static/documentation_options.js?v=01f34227"></script>
       <script src="_static/doctools.js?v=fd6eb6e6"></script>
       <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" /> 
@@ -79,8 +80,16 @@
 <li><a class="reference internal" href="#sciforge.matkit.carrier_pinn.models.CarrierPINN.forward"><code class="docutils literal notranslate"><span class="pre">CarrierPINN.forward()</span></code></a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#sciforge.matkit.carrier_pinn.physics.DriftDiffusionPhysics"><code class="docutils literal notranslate"><span class="pre">DriftDiffusionPhysics</span></code></a><ul>
-<li><a class="reference internal" href="#sciforge.matkit.carrier_pinn.physics.DriftDiffusionPhysics.compute_pde_residual"><code class="docutils literal notranslate"><span class="pre">DriftDiffusionPhysics.compute_pde_residual()</span></code></a></li>
+<li><a class="reference internal" href="#sciforge.matkit.carrier_pinn.physics.BasePhysicsSolver"><code class="docutils literal notranslate"><span class="pre">BasePhysicsSolver</span></code></a><ul>
+<li><a class="reference internal" href="#sciforge.matkit.carrier_pinn.physics.BasePhysicsSolver.compute_residuals"><code class="docutils literal notranslate"><span class="pre">BasePhysicsSolver.compute_residuals()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sciforge.matkit.carrier_pinn.physics.ConstantFieldPhysics"><code class="docutils literal notranslate"><span class="pre">ConstantFieldPhysics</span></code></a><ul>
+<li><a class="reference internal" href="#sciforge.matkit.carrier_pinn.physics.ConstantFieldPhysics.compute_residuals"><code class="docutils literal notranslate"><span class="pre">ConstantFieldPhysics.compute_residuals()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sciforge.matkit.carrier_pinn.physics.PoissonCoupledPhysics"><code class="docutils literal notranslate"><span class="pre">PoissonCoupledPhysics</span></code></a><ul>
+<li><a class="reference internal" href="#sciforge.matkit.carrier_pinn.physics.PoissonCoupledPhysics.compute_residuals"><code class="docutils literal notranslate"><span class="pre">PoissonCoupledPhysics.compute_residuals()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -360,39 +369,155 @@ Tangent (Tanh) activation functions to calculate stable higher-order derivatives
 </dd></dl>
 
 <dl class="py class" id="module-sciforge.matkit.carrier_pinn.physics">
-<dt class="sig sig-object py" id="sciforge.matkit.carrier_pinn.physics.DriftDiffusionPhysics">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sciforge.matkit.carrier_pinn.physics.</span></span><span class="sig-name descname"><span class="pre">DriftDiffusionPhysics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">effective_mass</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permittivity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">electric_field</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1000.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sciforge/matkit/carrier_pinn/physics.html#DriftDiffusionPhysics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sciforge.matkit.carrier_pinn.physics.DriftDiffusionPhysics" title="Link to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Evaluates the physical partial differential equation residuals for carrier transport.</p>
-<p>This class links semiconductor device constraints (effective mass, permittivity)
-to a PyTorch optimisation graph to solve steady-state drift-diffusion equations.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>effective_mass</strong> (<em>float</em>) – The material effective mass relative to electron mass (m_e).</p></li>
-<li><p><strong>permittivity</strong> (<em>float</em>) – The relative material permittivity (dielectric constant).</p></li>
-<li><p><strong>electric_field</strong> (<em>float</em><em>, </em><em>optional</em>) – Applied electric field in V/m. Defaults to 1.0e3.</p></li>
-</ul>
-</dd>
-</dl>
+<dt class="sig sig-object py" id="sciforge.matkit.carrier_pinn.physics.BasePhysicsSolver">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sciforge.matkit.carrier_pinn.physics.</span></span><span class="sig-name descname"><span class="pre">BasePhysicsSolver</span></span><a class="reference internal" href="_modules/sciforge/matkit/carrier_pinn/physics.html#BasePhysicsSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sciforge.matkit.carrier_pinn.physics.BasePhysicsSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<p>Abstract interface for scientific neural net partial differential equation constraints.</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="sciforge.matkit.carrier_pinn.physics.DriftDiffusionPhysics.compute_pde_residual">
-<span class="sig-name descname"><span class="pre">compute_pde_residual</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Module</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tensor</span></span></span><a class="reference internal" href="_modules/sciforge/matkit/carrier_pinn/physics.html#DriftDiffusionPhysics.compute_pde_residual"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sciforge.matkit.carrier_pinn.physics.DriftDiffusionPhysics.compute_pde_residual" title="Link to this definition"></a></dt>
-<dd><p>Calculates the physical residual error of the drift-diffusion PDE using autograd.</p>
-<p>Computes the second-order spatial derivative to enforce:
-D_n * (d2n/dx2) + mu_n * E * (dn/dx) = 0</p>
+<dt class="sig sig-object py" id="sciforge.matkit.carrier_pinn.physics.BasePhysicsSolver.compute_residuals">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">compute_residuals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Module</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/sciforge/matkit/carrier_pinn/physics.html#BasePhysicsSolver.compute_residuals"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sciforge.matkit.carrier_pinn.physics.BasePhysicsSolver.compute_residuals" title="Link to this definition"></a></dt>
+<dd><p>Calculates loss tensor mapping metrics for active physics environments.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>x</strong> (<em>torch.Tensor</em>) – Spatial coordinate inputs of shape [Batch, 1].</p></li>
-<li><p><strong>model</strong> (<em>torch.nn.Module</em>) – The neural network predicting carrier density n(x).</p></li>
+<li><p><strong>x</strong> (<em>torch.Tensor</em>) – Spatial coordinate tracking grid of shape <cite>[Batch Size, 1]</cite>.</p></li>
+<li><p><strong>model</strong> (<em>nn.Module</em>) – The neural network evaluating target fields at coordinates <cite>x</cite>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The physical residual tensor evaluated at each input point.</p>
+<dd class="field-even"><p><dl class="simple">
+<dt>Map of string identifiers to calculated residual loss</dt><dd><p>tensors (e.g., {“transport”: tensor}). Each tensor matches the shape of <cite>x</cite>.</p>
+</dd>
+</dl>
+</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>torch.Tensor</p>
+<dd class="field-odd"><p>dict[str, torch.Tensor]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sciforge.matkit.carrier_pinn.physics.ConstantFieldPhysics">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sciforge.matkit.carrier_pinn.physics.</span></span><span class="sig-name descname"><span class="pre">ConstantFieldPhysics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">effective_mass</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permittivity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">electric_field</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1000.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sciforge/matkit/carrier_pinn/physics.html#ConstantFieldPhysics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sciforge.matkit.carrier_pinn.physics.ConstantFieldPhysics" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#sciforge.matkit.carrier_pinn.physics.BasePhysicsSolver" title="sciforge.matkit.carrier_pinn.physics.BasePhysicsSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasePhysicsSolver</span></code></a></p>
+<p>Evaluates the 1D Drift-Diffusion equation under a static, uniform electric field.</p>
+<blockquote>
+<div><p>Enforces steady-state charge carrier conservation assuming a constant acceleration profile.
+The underlying governing partial differential equation is defined as:</p>
+<div class="math notranslate nohighlight">
+\[\mathcal{R}(x) = D_n\]</div>
+</div></blockquote>
+<p>rac{d^2n}{dx^2} + mu_n E
+rac{dn}{dx} = 0</p>
+<blockquote>
+<div><p>Where <span class="math notranslate nohighlight">\(\mu_n\)</span> is the mobility inversely proportional to the material’s effective mass,
+<span class="math notranslate nohighlight">\(D_n\)</span> is the diffusion coefficient linked via the Einstein relation, and <span class="math notranslate nohighlight">\(E\)</span>
+is the static electric field.</p>
+<dl class="simple">
+<dt>Attributes:</dt><dd><p>q (float): Elementary electron charge constant in Coulombs (1.602e-19 C).
+kb_t (float): Thermal energy constant at 300K in Joules.
+mobility (float): Electron mobility in :math:`  ext{m}^2/(      ext{V}cdot     ext{s})`.
+diffusion_coeff (float): Diffusion coefficient in :math:`       ext{m}^2/       ext{s}`.
+electric_field (float): Applied background uniform electric field in V/m.</p>
+</dd>
+</dl>
+</div></blockquote>
+<dl class="py method">
+<dt class="sig sig-object py" id="sciforge.matkit.carrier_pinn.physics.ConstantFieldPhysics.compute_residuals">
+<span class="sig-name descname"><span class="pre">compute_residuals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Module</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/sciforge/matkit/carrier_pinn/physics.html#ConstantFieldPhysics.compute_residuals"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sciforge.matkit.carrier_pinn.physics.ConstantFieldPhysics.compute_residuals" title="Link to this definition"></a></dt>
+<dd><p>Calculates the 1D transport residual error via automatic differentiation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>torch.Tensor</em>) – Spatial coordinate tracking grid of shape <cite>[Batch Size, 1]</cite>.</p></li>
+<li><p><strong>model</strong> (<em>nn.Module</em>) – Neural network tracking single-field carrier density <span class="math notranslate nohighlight">\(n(x)\)</span>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>Dictionary containing a single entry mapping the key</dt><dd><p>”transport” to the calculated residual tensor of shape <cite>[Batch Size, 1]</cite>.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict[str, torch.Tensor]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sciforge.matkit.carrier_pinn.physics.PoissonCoupledPhysics">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sciforge.matkit.carrier_pinn.physics.</span></span><span class="sig-name descname"><span class="pre">PoissonCoupledPhysics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">effective_mass</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permittivity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">donor_doping</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1e+22</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sciforge/matkit/carrier_pinn/physics.html#PoissonCoupledPhysics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sciforge.matkit.carrier_pinn.physics.PoissonCoupledPhysics" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#sciforge.matkit.carrier_pinn.physics.BasePhysicsSolver" title="sciforge.matkit.carrier_pinn.physics.BasePhysicsSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasePhysicsSolver</span></code></a></p>
+<p>Evaluates highly non-linear self-consistent coupled Poisson and Drift-Diffusion loops.</p>
+<blockquote>
+<div><p>Enforces space-charge electrostatic balance and current continuity simultaneously. The
+engine solves a coupled system of multi-field non-linear partial differential equations:</p>
+<div class="math notranslate nohighlight">
+\[\mathcal{R}_{    ext{poisson}}(x) =\]</div>
+</div></blockquote>
+<p>rac{d^2phi}{dx^2} +
+rac{q}{epsilon_0 epsilon_r}</p>
+<blockquote>
+<div><p>left( N_D^+ - n(x)</p>
+</div></blockquote>
+<p>ight) = 0</p>
+<blockquote>
+<div><div class="math notranslate nohighlight">
+\[\mathcal{R}_{    ext{transport}}(x) = D_n\]</div>
+</div></blockquote>
+<p>rac{d^2n}{dx^2} + mu_n left(-
+rac{dphi}{dx}</p>
+<p>ight)
+rac{dn}{dx} + mu_n left(-
+rac{d^2phi}{dx^2}
+ight)n(x) = 0</p>
+<blockquote>
+<div><p>Where <span class="math notranslate nohighlight">\(\phi(x)\)</span> represents the local electrostatic potential, <span class="math notranslate nohighlight">\(n(x)\)</span> is the
+carrier concentration, and <span class="math notranslate nohighlight">\(N_D^+\)</span> is the background donor doping density.</p>
+<dl class="simple">
+<dt>Attributes:</dt><dd><p>q (float): Elementary electron charge constant in Coulombs (1.602e-19 C).
+kb_t (float): Thermal energy constant at 300K in Joules.
+eps0 (float): Vacuum permittivity constant in Farads per meter (8.854e-12 F/m).
+eps_r (float): Relative material static dielectric constant.
+nd (float): Uniform background n-type donor doping concentration in :math:`     ext{m}^{-3}`.
+mobility (float): Electron mobility in :math:`  ext{m}^2/(      ext{V}cdot     ext{s})`.
+diffusion_coeff (float): Diffusion coefficient in :math:`       ext{m}^2/       ext{s}`.</p>
+</dd>
+</dl>
+</div></blockquote>
+<dl class="py method">
+<dt class="sig sig-object py" id="sciforge.matkit.carrier_pinn.physics.PoissonCoupledPhysics.compute_residuals">
+<span class="sig-name descname"><span class="pre">compute_residuals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_scaled</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Module</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/sciforge/matkit/carrier_pinn/physics.html#PoissonCoupledPhysics.compute_residuals"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sciforge.matkit.carrier_pinn.physics.PoissonCoupledPhysics.compute_residuals" title="Link to this definition"></a></dt>
+<dd><p>Calculates independent residuals for both the Poisson and Transport loops.</p>
+<p>Extracts multi-variable outputs from the network nodes, evaluates higher-order spatial
+potentials, and tracks gradients using the autograd computational history graph.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x_scaled</strong> (<em>torch.Tensor</em>) – Scaled spatial coordinate tracking grid of shape <cite>[Batch Size, 1]</cite>.</p></li>
+<li><p><strong>model</strong> (<em>nn.Module</em>) – Neural network tracking multi-variable outputs where channel 0
+maps to carrier density <span class="math notranslate nohighlight">\(n(x)\)</span> and channel 1 maps to potential <span class="math notranslate nohighlight">\(\phi(x)\)</span>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>Dictionary containing two keys:</dt><dd><ul class="simple">
+<li><p>”poisson”: Electrostatic residual tensor of shape <cite>[Batch Size, 1]</cite>.</p></li>
+<li><p>”transport”: Coupled drift-diffusion conservation tensor of shape <cite>[Batch Size, 1]</cite>.</p></li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict[str, torch.Tensor]</p>
 </dd>
 </dl>
 </dd></dl>

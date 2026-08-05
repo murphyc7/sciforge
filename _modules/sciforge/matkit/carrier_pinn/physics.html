@@ -66,25 +66,72 @@
            <div itemprop="articleBody">
              
   <h1>Source code for sciforge.matkit.carrier_pinn.physics</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 
 
-<div class="viewcode-block" id="DriftDiffusionPhysics">
-<a class="viewcode-back" href="../../../../index.html#sciforge.matkit.carrier_pinn.physics.DriftDiffusionPhysics">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">DriftDiffusionPhysics</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Evaluates the physical partial differential equation residuals for carrier transport.</span>
+<div class="viewcode-block" id="BasePhysicsSolver">
+<a class="viewcode-back" href="../../../../index.html#sciforge.matkit.carrier_pinn.physics.BasePhysicsSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BasePhysicsSolver</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract interface for scientific neural net partial differential equation constraints.&quot;&quot;&quot;</span>
 
-<span class="sd">    This class links semiconductor device constraints (effective mass, permittivity)</span>
-<span class="sd">    to a PyTorch optimisation graph to solve steady-state drift-diffusion equations.</span>
+<div class="viewcode-block" id="BasePhysicsSolver.compute_residuals">
+<a class="viewcode-back" href="../../../../index.html#sciforge.matkit.carrier_pinn.physics.BasePhysicsSolver.compute_residuals">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_residuals</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculates loss tensor mapping metrics for active physics environments.</span>
 
-<span class="sd">    Args:</span>
-<span class="sd">        effective_mass (float): The material effective mass relative to electron mass (m_e).</span>
-<span class="sd">        permittivity (float): The relative material permittivity (dielectric constant).</span>
-<span class="sd">        electric_field (float, optional): Applied electric field in V/m. Defaults to 1.0e3.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            x (torch.Tensor): Spatial coordinate tracking grid of shape `[Batch Size, 1]`.</span>
+<span class="sd">            model (nn.Module): The neural network evaluating target fields at coordinates `x`.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict[str, torch.Tensor]: Map of string identifiers to calculated residual loss</span>
+<span class="sd">                tensors (e.g., {&quot;transport&quot;: tensor}). Each tensor matches the shape of `x`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ConstantFieldPhysics">
+<a class="viewcode-back" href="../../../../index.html#sciforge.matkit.carrier_pinn.physics.ConstantFieldPhysics">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ConstantFieldPhysics</span><span class="p">(</span><span class="n">BasePhysicsSolver</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Evaluates the 1D Drift-Diffusion equation under a static, uniform electric field.</span>
+
+<span class="sd">    Enforces steady-state charge carrier conservation assuming a constant acceleration profile.</span>
+<span class="sd">    The underlying governing partial differential equation is defined as:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">       \mathcal{R}(x) = D_n \frac{d^2n}{dx^2} + \mu_n E \frac{dn}{dx} = 0</span>
+
+<span class="sd">    Where :math:`\mu_n` is the mobility inversely proportional to the material&#39;s effective mass,</span>
+<span class="sd">    :math:`D_n` is the diffusion coefficient linked via the Einstein relation, and :math:`E`</span>
+<span class="sd">    is the static electric field.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        q (float): Elementary electron charge constant in Coulombs (1.602e-19 C).</span>
+<span class="sd">        kb_t (float): Thermal energy constant at 300K in Joules.</span>
+<span class="sd">        mobility (float): Electron mobility in :math:`\text{m}^2/(\text{V}\cdot\text{s})`.</span>
+<span class="sd">        diffusion_coeff (float): Diffusion coefficient in :math:`\text{m}^2/\text{s}`.</span>
+<span class="sd">        electric_field (float): Applied background uniform electric field in V/m.</span>
+<span class="sd">    &quot;&quot;&quot;</span>  <span class="c1"># noqa: W605</span>
+
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">effective_mass</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">permittivity</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">electric_field</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0e3</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialises the constant-field drift-diffusion physics environment.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            effective_mass (float): Material effective mass relative to electron mass (:math:`m_e`).</span>
+<span class="sd">            permittivity (float): Relative static material macroscopic dielectric constant.</span>
+<span class="sd">            electric_field (float, optional): Applied uniform electric field in V/m.</span>
+<span class="sd">                Defaults to 1.0e3.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Base physical constants</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">q</span> <span class="o">=</span> <span class="mf">1.602e-19</span>  <span class="c1"># Electron charge (C)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">kb_t</span> <span class="o">=</span> <span class="mf">0.0259</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">q</span>  <span class="c1"># Thermal energy at 300K (J)</span>
@@ -95,24 +142,23 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">mobility</span> <span class="o">=</span> <span class="n">base_mobility</span> <span class="o">/</span> <span class="p">(</span><span class="n">effective_mass</span> <span class="o">+</span> <span class="mf">1e-8</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">diffusion_coeff</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mobility</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kb_t</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">electric_field</span> <span class="o">=</span> <span class="n">electric_field</span>  <span class="c1"># V/m</span>
+        <span class="c1"># Electric field V/m</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">electric_field</span> <span class="o">=</span> <span class="n">electric_field</span>
 
-<div class="viewcode-block" id="DriftDiffusionPhysics.compute_pde_residual">
-<a class="viewcode-back" href="../../../../index.html#sciforge.matkit.carrier_pinn.physics.DriftDiffusionPhysics.compute_pde_residual">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">compute_pde_residual</span><span class="p">(</span>
+<div class="viewcode-block" id="ConstantFieldPhysics.compute_residuals">
+<a class="viewcode-back" href="../../../../index.html#sciforge.matkit.carrier_pinn.physics.ConstantFieldPhysics.compute_residuals">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_residuals</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculates the physical residual error of the drift-diffusion PDE using autograd.</span>
-
-<span class="sd">        Computes the second-order spatial derivative to enforce:</span>
-<span class="sd">        D_n * (d2n/dx2) + mu_n * E * (dn/dx) = 0</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculates the 1D transport residual error via automatic differentiation.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            x (torch.Tensor): Spatial coordinate inputs of shape [Batch, 1].</span>
-<span class="sd">            model (torch.nn.Module): The neural network predicting carrier density n(x).</span>
+<span class="sd">            x (torch.Tensor): Spatial coordinate tracking grid of shape `[Batch Size, 1]`.</span>
+<span class="sd">            model (nn.Module): Neural network tracking single-field carrier density :math:`n(x)`.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            torch.Tensor: The physical residual tensor evaluated at each input point.</span>
+<span class="sd">            dict[str, torch.Tensor]: Dictionary containing a single entry mapping the key</span>
+<span class="sd">                &quot;transport&quot; to the calculated residual tensor of shape `[Batch Size, 1]`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Force tracker graph inclusion for spatial coordinates</span>
         <span class="n">x</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
@@ -146,7 +192,135 @@
         <span class="n">diffusion_term</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">diffusion_coeff</span> <span class="o">*</span> <span class="n">d2n_dx2</span>
 
         <span class="n">residual</span> <span class="o">=</span> <span class="n">diffusion_term</span> <span class="o">+</span> <span class="n">drift_term</span>
-        <span class="k">return</span> <span class="n">residual</span></div>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;transport&quot;</span><span class="p">:</span> <span class="n">residual</span><span class="p">}</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="PoissonCoupledPhysics">
+<a class="viewcode-back" href="../../../../index.html#sciforge.matkit.carrier_pinn.physics.PoissonCoupledPhysics">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">PoissonCoupledPhysics</span><span class="p">(</span><span class="n">BasePhysicsSolver</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Evaluates highly non-linear self-consistent coupled Poisson and Drift-Diffusion loops.</span>
+
+<span class="sd">    Enforces space-charge electrostatic balance and current continuity simultaneously. The</span>
+<span class="sd">    engine solves a coupled system of multi-field non-linear partial differential equations:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">       \mathcal{R}_{\text{poisson}}(x) = \frac{d^2\phi}{dx^2} + \frac{q}{\epsilon_0 \epsilon_r}</span>
+<span class="sd">       \left( N_D^+ - n(x) \right) = 0</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">       \mathcal{R}_{\text{transport}}(x) = D_n \frac{d^2n}{dx^2} + \mu_n \left(-\frac{d\phi}{dx}</span>
+<span class="sd">       \right) \frac{dn}{dx} + \mu_n \left(-\frac{d^2\phi}{dx^2}\right)n(x) = 0</span>
+
+<span class="sd">    Where :math:`\phi(x)` represents the local electrostatic potential, :math:`n(x)` is the</span>
+<span class="sd">    carrier concentration, and :math:`N_D^+` is the background donor doping density.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        q (float): Elementary electron charge constant in Coulombs (1.602e-19 C).</span>
+<span class="sd">        kb_t (float): Thermal energy constant at 300K in Joules.</span>
+<span class="sd">        eps0 (float): Vacuum permittivity constant in Farads per meter (8.854e-12 F/m).</span>
+<span class="sd">        eps_r (float): Relative material static dielectric constant.</span>
+<span class="sd">        nd (float): Uniform background n-type donor doping concentration in :math:`\text{m}^{-3}`.</span>
+<span class="sd">        mobility (float): Electron mobility in :math:`\text{m}^2/(\text{V}\cdot\text{s})`.</span>
+<span class="sd">        diffusion_coeff (float): Diffusion coefficient in :math:`\text{m}^2/\text{s}`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>  <span class="c1"># noqa: W605</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">effective_mass</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">permittivity</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">donor_doping</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0e22</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialises the self-consistent Poisson-coupled physics solver.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            effective_mass (float): Material effective mass relative to electron mass (:math:`m_e`).</span>
+<span class="sd">            permittivity (float): Relative static material macroscopic dielectric constant.</span>
+<span class="sd">            donor_doping (float, optional): Background uniform ionized donor concentration in</span>
+<span class="sd">                :math:`\text{m}^{-3}`. Defaults to 1.0e22.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Scaling parameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">L_scale</span> <span class="o">=</span> <span class="mf">1.0e-6</span>  <span class="c1"># 1 micron scaling factor</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">N_scale</span> <span class="o">=</span> <span class="mf">1.0e22</span>  <span class="c1"># 1e22 m^-3 carrier scaling factor</span>
+
+        <span class="c1"># Physical parameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">q</span> <span class="o">=</span> <span class="mf">1.602e-19</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kb_t</span> <span class="o">=</span> <span class="mf">0.0259</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">q</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eps0</span> <span class="o">=</span> <span class="mf">8.854e-12</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eps_r</span> <span class="o">=</span> <span class="n">permittivity</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nd_scaled</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">donor_doping</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">N_scale</span>
+        <span class="p">)</span>  <span class="c1"># Background uniform doping scaled to 1.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mobility</span> <span class="o">=</span> <span class="mf">0.14</span> <span class="o">/</span> <span class="p">(</span><span class="n">effective_mass</span> <span class="o">+</span> <span class="mf">1e-8</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">diffusion_coeff</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mobility</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kb_t</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">)</span>
+
+<div class="viewcode-block" id="PoissonCoupledPhysics.compute_residuals">
+<a class="viewcode-back" href="../../../../index.html#sciforge.matkit.carrier_pinn.physics.PoissonCoupledPhysics.compute_residuals">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_residuals</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">x_scaled</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculates independent residuals for both the Poisson and Transport loops.</span>
+
+<span class="sd">        Extracts multi-variable outputs from the network nodes, evaluates higher-order spatial</span>
+<span class="sd">        potentials, and tracks gradients using the autograd computational history graph.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            x_scaled (torch.Tensor): Scaled spatial coordinate tracking grid of shape `[Batch Size, 1]`.</span>
+<span class="sd">            model (nn.Module): Neural network tracking multi-variable outputs where channel 0</span>
+<span class="sd">                maps to carrier density :math:`n(x)` and channel 1 maps to potential :math:`\phi(x)`.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict[str, torch.Tensor]: Dictionary containing two keys:</span>
+<span class="sd">                - &quot;poisson&quot;: Electrostatic residual tensor of shape `[Batch Size, 1]`.</span>
+<span class="sd">                - &quot;transport&quot;: Coupled drift-diffusion conservation tensor of shape `[Batch Size, 1]`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>  <span class="c1"># noqa: W605</span>
+        <span class="n">x_scaled</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">predictions</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">x_scaled</span><span class="p">)</span>
+
+        <span class="n">n_scaled</span> <span class="o">=</span> <span class="n">predictions</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">:</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">phi</span> <span class="o">=</span> <span class="n">predictions</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span>
+
+        <span class="n">dn_dx</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span>
+            <span class="n">n_scaled</span><span class="p">,</span>
+            <span class="n">x_scaled</span><span class="p">,</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">n_scaled</span><span class="p">),</span>
+            <span class="n">create_graph</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">retain_graph</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">dphi_dx</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span>
+            <span class="n">phi</span><span class="p">,</span> <span class="n">x_scaled</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">phi</span><span class="p">),</span> <span class="n">create_graph</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">retain_graph</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="n">d2n_dx2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span>
+            <span class="n">dn_dx</span><span class="p">,</span>
+            <span class="n">x_scaled</span><span class="p">,</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">dn_dx</span><span class="p">),</span>
+            <span class="n">create_graph</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">retain_graph</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">d2phi_dx2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span>
+            <span class="n">dphi_dx</span><span class="p">,</span>
+            <span class="n">x_scaled</span><span class="p">,</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">dphi_dx</span><span class="p">),</span>
+            <span class="n">create_graph</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">retain_graph</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># Scaled Equation 1: Poisson Residual</span>
+        <span class="c1"># d2phi/dx^2 + L^2 * (q * N_scale / eps) * (Nd - n) = 0</span>
+        <span class="n">poisson_constant</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">L_scale</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">N_scale</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eps0</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">eps_r</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">poisson_residual</span> <span class="o">=</span> <span class="n">d2phi_dx2</span> <span class="o">+</span> <span class="n">poisson_constant</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nd_scaled</span> <span class="o">-</span> <span class="n">n_scaled</span><span class="p">)</span>
+
+        <span class="c1"># Scaled Equation 2: Transport Residual</span>
+        <span class="c1"># Dn * d2n/dx^2 - mu * dphi/dx * dn/dx - mu * d2phi/dx^2 * n = 0</span>
+        <span class="c1"># Multiplied by L_scale^2 to match the matrix order of dimensions</span>
+        <span class="n">drift_term</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mobility</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="n">dphi_dx</span> <span class="o">*</span> <span class="n">dn_dx</span> <span class="o">-</span> <span class="n">d2phi_dx2</span> <span class="o">*</span> <span class="n">n_scaled</span><span class="p">)</span>
+        <span class="n">diffusion_term</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">diffusion_coeff</span> <span class="o">*</span> <span class="n">d2n_dx2</span>
+        <span class="n">transport_residual</span> <span class="o">=</span> <span class="n">diffusion_term</span> <span class="o">+</span> <span class="n">drift_term</span>
+
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;poisson&quot;</span><span class="p">:</span> <span class="n">poisson_residual</span><span class="p">,</span> <span class="s2">&quot;transport&quot;</span><span class="p">:</span> <span class="n">transport_residual</span><span class="p">}</span></div>
 </div>
 
 </pre></div>
