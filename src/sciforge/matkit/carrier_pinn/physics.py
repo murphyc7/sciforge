@@ -20,7 +20,7 @@ class BasePhysicsSolver(ABC):
             dict[str, torch.Tensor]: Map of string identifiers to calculated residual loss
                 tensors (e.g., {"transport": tensor}). Each tensor matches the shape of `x`.
         """
-        pass
+        pass  # pragma: no cover
 
 
 class ConstantFieldPhysics(BasePhysicsSolver):
