@@ -132,6 +132,9 @@
 <span class="sd">            electric_field (float, optional): Applied uniform electric field in V/m.</span>
 <span class="sd">                Defaults to 1.0e3.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Scale parameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">L_scale</span> <span class="o">=</span> <span class="mf">1.0e-6</span>  <span class="c1"># 1 um scaling factor</span>
+
         <span class="c1"># Base physical constants</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">q</span> <span class="o">=</span> <span class="mf">1.602e-19</span>  <span class="c1"># Electron charge (C)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">kb_t</span> <span class="o">=</span> <span class="mf">0.0259</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">q</span>  <span class="c1"># Thermal energy at 300K (J)</span>
@@ -141,14 +144,19 @@
         <span class="n">base_mobility</span> <span class="o">=</span> <span class="mf">0.14</span>  <span class="c1"># m^2/(V*s)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mobility</span> <span class="o">=</span> <span class="n">base_mobility</span> <span class="o">/</span> <span class="p">(</span><span class="n">effective_mass</span> <span class="o">+</span> <span class="mf">1e-8</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">diffusion_coeff</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mobility</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kb_t</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">)</span>
-
-        <span class="c1"># Electric field V/m</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">electric_field</span> <span class="o">=</span> <span class="n">electric_field</span>
+
+        <span class="c1"># Calculate the exact mathematical magnitude of the second derivative when evaluated</span>
+        <span class="c1"># on normalised 0.0 to 1.0 grid space</span>
+        <span class="n">coeff_d2n_scaled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">diffusion_coeff</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">L_scale</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+        <span class="c1"># Create an automatic structural multiplier to bound your physics loss near ~1.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">loss_normaliser</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">coeff_d2n_scaled</span>
 
 <div class="viewcode-block" id="ConstantFieldPhysics.compute_residuals">
 <a class="viewcode-back" href="../../../../index.html#sciforge.matkit.carrier_pinn.physics.ConstantFieldPhysics.compute_residuals">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_residuals</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">x_scaled</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculates the 1D transport residual error via automatic differentiation.</span>
 
@@ -161,15 +169,15 @@
 <span class="sd">                &quot;transport&quot; to the calculated residual tensor of shape `[Batch Size, 1]`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Force tracker graph inclusion for spatial coordinates</span>
-        <span class="n">x</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">x_scaled</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
 
         <span class="c1"># Evaluate model prediction: n = f(x)</span>
-        <span class="n">n</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">x_scaled</span><span class="p">)</span>
 
         <span class="c1"># Compute first derivative: dn/dx</span>
         <span class="n">dn_dx</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span>
             <span class="n">outputs</span><span class="o">=</span><span class="n">n</span><span class="p">,</span>
-            <span class="n">inputs</span><span class="o">=</span><span class="n">x</span><span class="p">,</span>
+            <span class="n">inputs</span><span class="o">=</span><span class="n">x_scaled</span><span class="p">,</span>
             <span class="n">grad_outputs</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">n</span><span class="p">),</span>
             <span class="n">create_graph</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="n">retain_graph</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -179,19 +187,25 @@
         <span class="c1"># Compute second derivative: d2n/dx2</span>
         <span class="n">d2n_dx2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span>
             <span class="n">outputs</span><span class="o">=</span><span class="n">dn_dx</span><span class="p">,</span>
-            <span class="n">inputs</span><span class="o">=</span><span class="n">x</span><span class="p">,</span>
+            <span class="n">inputs</span><span class="o">=</span><span class="n">x_scaled</span><span class="p">,</span>
             <span class="n">grad_outputs</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">dn_dx</span><span class="p">),</span>
             <span class="n">create_graph</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="n">retain_graph</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="n">only_inputs</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 
+        <span class="c1"># Convert derivatives back to physical space based on length scale rules</span>
+        <span class="n">dn_dx_phys</span> <span class="o">=</span> <span class="n">dn_dx</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">L_scale</span>
+        <span class="n">d2n_dx2_phys</span> <span class="o">=</span> <span class="n">d2n_dx2</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">L_scale</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
         <span class="c1"># Assume net generation-recombination rate R(x) is negligible for steady-state demonstration</span>
         <span class="c1"># PDE Residual: D_n * (d2n/dx2) + mu_n * E * (dn/dx) = 0</span>
-        <span class="n">drift_term</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mobility</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">electric_field</span> <span class="o">*</span> <span class="n">dn_dx</span>
-        <span class="n">diffusion_term</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">diffusion_coeff</span> <span class="o">*</span> <span class="n">d2n_dx2</span>
+        <span class="n">drift_term</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mobility</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">electric_field</span> <span class="o">*</span> <span class="n">dn_dx_phys</span>
+        <span class="n">diffusion_term</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">diffusion_coeff</span> <span class="o">*</span> <span class="n">d2n_dx2_phys</span>
 
-        <span class="n">residual</span> <span class="o">=</span> <span class="n">diffusion_term</span> <span class="o">+</span> <span class="n">drift_term</span>
+        <span class="c1"># Multiply the entire residual by normaliser</span>
+        <span class="c1"># This scales the second derivative down, removing the flat-line penalty</span>
+        <span class="n">residual</span> <span class="o">=</span> <span class="p">(</span><span class="n">diffusion_term</span> <span class="o">+</span> <span class="n">drift_term</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_normaliser</span>
         <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;transport&quot;</span><span class="p">:</span> <span class="n">residual</span><span class="p">}</span></div>
 </div>
 
