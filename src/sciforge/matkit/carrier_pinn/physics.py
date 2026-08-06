@@ -56,6 +56,9 @@ class ConstantFieldPhysics(BasePhysicsSolver):
             electric_field (float, optional): Applied uniform electric field in V/m.
                 Defaults to 1.0e3.
         """
+        # Scale parameters
+        self.L_scale = 1.0e-6  # 1 um scaling factor
+
         # Base physical constants
         self.q = 1.602e-19  # Electron charge (C)
         self.kb_t = 0.0259 * self.q  # Thermal energy at 300K (J)
@@ -65,12 +68,17 @@ class ConstantFieldPhysics(BasePhysicsSolver):
         base_mobility = 0.14  # m^2/(V*s)
         self.mobility = base_mobility / (effective_mass + 1e-8)
         self.diffusion_coeff = self.mobility * (self.kb_t / self.q)
-
-        # Electric field V/m
         self.electric_field = electric_field
 
+        # Calculate the exact mathematical magnitude of the second derivative when evaluated
+        # on normalised 0.0 to 1.0 grid space
+        coeff_d2n_scaled = self.diffusion_coeff / (self.L_scale**2)
+
+        # Create an automatic structural multiplier to bound your physics loss near ~1.0
+        self.loss_normaliser = 1.0 / coeff_d2n_scaled
+
     def compute_residuals(
-        self, x: torch.Tensor, model: torch.nn.Module
+        self, x_scaled: torch.Tensor, model: torch.nn.Module
     ) -> dict[str, torch.Tensor]:
         """Calculates the 1D transport residual error via automatic differentiation.
 
@@ -83,15 +91,15 @@ class ConstantFieldPhysics(BasePhysicsSolver):
                 "transport" to the calculated residual tensor of shape `[Batch Size, 1]`.
         """
         # Force tracker graph inclusion for spatial coordinates
-        x.requires_grad_(True)
+        x_scaled.requires_grad_(True)
 
         # Evaluate model prediction: n = f(x)
-        n = model(x)
+        n = model(x_scaled)
 
         # Compute first derivative: dn/dx
         dn_dx = torch.autograd.grad(
             outputs=n,
-            inputs=x,
+            inputs=x_scaled,
             grad_outputs=torch.ones_like(n),
             create_graph=True,
             retain_graph=True,
@@ -101,19 +109,25 @@ class ConstantFieldPhysics(BasePhysicsSolver):
         # Compute second derivative: d2n/dx2
         d2n_dx2 = torch.autograd.grad(
             outputs=dn_dx,
-            inputs=x,
+            inputs=x_scaled,
             grad_outputs=torch.ones_like(dn_dx),
             create_graph=True,
             retain_graph=True,
             only_inputs=True,
         )[0]
 
+        # Convert derivatives back to physical space based on length scale rules
+        dn_dx_phys = dn_dx / self.L_scale
+        d2n_dx2_phys = d2n_dx2 / (self.L_scale**2)
+
         # Assume net generation-recombination rate R(x) is negligible for steady-state demonstration
         # PDE Residual: D_n * (d2n/dx2) + mu_n * E * (dn/dx) = 0
-        drift_term = self.mobility * self.electric_field * dn_dx
-        diffusion_term = self.diffusion_coeff * d2n_dx2
+        drift_term = self.mobility * self.electric_field * dn_dx_phys
+        diffusion_term = self.diffusion_coeff * d2n_dx2_phys
 
-        residual = diffusion_term + drift_term
+        # Multiply the entire residual by normaliser
+        # This scales the second derivative down, removing the flat-line penalty
+        residual = (diffusion_term + drift_term) * self.loss_normaliser
         return {"transport": residual}
 
 

@@ -12,6 +12,7 @@ from sciforge.matkit.carrier_pinn.physics import (
     PoissonCoupledPhysics,
 )
 from sciforge.matkit.utils.db_client import DatabaseClient, MaterialModel
+from sciforge.visualisation.components import DualAxisTransportPlotter
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
@@ -90,6 +91,7 @@ def main() -> None:
         # 2. Compute stable scaled residuals
         residuals_dict = physics_engine.compute_residuals(x_interior, model)
 
+        # 3. Dynamic total loss summation loop
         loss_physics = 0.0
         for key, res in residuals_dict.items():
             if key == "poisson":
@@ -106,6 +108,37 @@ def main() -> None:
             logger.info(
                 f"Epoch {epoch:04d} | Total Loss: {total_loss.item():.4e} | BC Mismatch: {loss_bc.item():.4e}"
             )
+
+    logger.info("Training complete. Commencing evaluation and graphics generation...")
+    model.eval()
+    with torch.no_grad():
+        # Evaluate final predictions across the unified spatial coordinate grid
+        final_predictions = model(x_interior)
+
+        # Convert PyTorch internal tensors safely back into standard NumPy arrays
+        np_x = x_interior.cpu().numpy()
+        np_out = final_predictions.cpu().numpy()
+
+    plotter = DualAxisTransportPlotter()
+
+    if args.engine == "constant":
+        # Pass data cleanly using flexible keyword argument variables
+        plotter.render(
+            save_path="example_visualisations/simulation_constant.png",
+            x=np_x,
+            n=np_out[:, 0:1],
+            title=f"Steady-State 1D Transport Profiles ({formula})",
+        )
+        logger.info("Constant field visualisation saved successfully.")
+    else:
+        plotter.render(
+            save_path="example_visualisations/simulation_coupled.png",
+            x=np_x,
+            n=np_out[:, 0:1],
+            phi=np_out[:, 1:2],
+            title=f"Self-Consistent Multi-Field Solutions ({formula})",
+        )
+        logger.info("Coupled self-consistent field visualisation saved successfully.")
 
 
 if __name__ == "__main__":
