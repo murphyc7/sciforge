@@ -2,6 +2,7 @@
 import argparse
 import logging
 import sys
+import time
 
 import torch
 import torch.nn as nn
@@ -11,6 +12,7 @@ from sciforge.matkit.carrier_pinn.physics import (
     ConstantFieldPhysics,
     PoissonCoupledPhysics,
 )
+from sciforge.matkit.registry.manager import SimulationTracker
 from sciforge.matkit.utils.db_client import DatabaseClient, MaterialModel
 from sciforge.visualisation.components import DualAxisTransportPlotter
 
@@ -79,6 +81,7 @@ def main() -> None:
     mse_criterion = nn.MSELoss()
 
     logger.info("Starting Physics-Informed Neural Network optimisation loop...")
+    start_time = time.time() # Start runtime clock
 
     for epoch in range(args.epochs + 1):
         optimiser.zero_grad()
@@ -108,6 +111,22 @@ def main() -> None:
             logger.info(
                 f"Epoch {epoch:04d} | Total Loss: {total_loss.item():.4e} | BC Mismatch: {loss_bc.item():.4e}"
             )
+
+    logger.info("Simulation complete. Proceeding with automated registry logging...")
+    tracker = SimulationTracker(db_client=db_client)
+    tracker.register_run(
+        material_id=args.material_id,
+        engine_mode=args.engine,
+        epochs=args.epochs,
+        lr=1e-3,
+        total_loss=total_loss.item(),
+        bc_loss=loss_bc.item(),
+        physics_loss=loss_physics.item()
+        if isinstance(loss_physics, float)
+        else loss_physics.item(),
+        start_time=start_time,
+        model=model,
+    )
 
     logger.info("Training complete. Commencing evaluation and graphics generation...")
     model.eval()
