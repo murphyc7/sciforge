@@ -12,6 +12,7 @@ from sciforge.matkit.carrier_pinn.physics import (
     PoissonCoupledPhysics,
 )
 from sciforge.matkit.utils.db_client import DatabaseClient, MaterialModel
+from sciforge.visualisation.components import DualAxisTransportPlotter
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
@@ -106,6 +107,35 @@ def main() -> None:
             logger.info(
                 f"Epoch {epoch:04d} | Total Loss: {total_loss.item():.4e} | BC Mismatch: {loss_bc.item():.4e}"
             )
+
+    logger.info("Training complete. Commencing evaluation and graphics generation...")
+    model.eval()
+    with torch.no_grad():
+        # Evaluate final predictions across the unified spatial coordinate grid
+        final_predictions = model(x_interior)
+
+        # Convert PyTorch internal tensors safely back into standard NumPy arrays
+        np_x = x_interior.cpu().numpy()
+        np_out = final_predictions.cpu().numpy()
+
+    plotter = DualAxisTransportPlotter()
+
+    if args.engine == "constant":
+        # Pass data cleanly using flexible keyword argument variables
+        plotter.render(
+            save_path="docs/build/html/_static/simulation_constant.png",
+            x=np_x,
+            n=np_out[:, 0:1],
+        )
+        logger.info("Constant field visualisation saved successfully.")
+    else:
+        plotter.render(
+            save_path="docs/build/html/_static/simulation_coupled.png",
+            x=np_x,
+            n=np_out[:, 0:1],
+            phi=np_out[:, 1:2],
+        )
+        logger.info("Coupled self-consistent field visualisation saved successfully.")
 
 
 if __name__ == "__main__":
