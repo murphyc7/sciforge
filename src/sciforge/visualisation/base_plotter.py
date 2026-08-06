@@ -33,4 +33,4 @@ class BasePlotter(ABC):
             save_path (str): File destination path (supports .pdf, .svg, .png).
             **kwargs: Flexible keyword arguments representing dataset targets.
         """
-        pass
+        pass  # pragma: no cover

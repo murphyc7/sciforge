@@ -62,8 +62,8 @@ class DualAxisTransportPlotter(BasePlotter):
             linewidth=1.5,
             label="Simulated density ($n$)",
         )
-        ax1.set_xlabel("Normalised position ($x / L$)")
-        ax1.set_ylabel("Normalised density ($n / N_0$)", color=color_n)
+        ax1.set_xlabel("Normalised position, $x / L$")
+        ax1.set_ylabel("Normalised density, $n / N_0$", color=color_n)
         ax1.tick_params(axis="y", labelcolor=color_n)
 
         lines = line1
