@@ -91,6 +91,7 @@ def main() -> None:
         # 2. Compute stable scaled residuals
         residuals_dict = physics_engine.compute_residuals(x_interior, model)
 
+        # 3. Dynamic total loss summation loop
         loss_physics = 0.0
         for key, res in residuals_dict.items():
             if key == "poisson":
@@ -123,17 +124,19 @@ def main() -> None:
     if args.engine == "constant":
         # Pass data cleanly using flexible keyword argument variables
         plotter.render(
-            save_path="docs/build/html/_static/simulation_constant.png",
+            save_path="example_visualisations/simulation_constant.png",
             x=np_x,
             n=np_out[:, 0:1],
+            title=f"Steady-State 1D Transport Profiles ({formula})",
         )
         logger.info("Constant field visualisation saved successfully.")
     else:
         plotter.render(
-            save_path="docs/build/html/_static/simulation_coupled.png",
+            save_path="example_visualisations/simulation_coupled.png",
             x=np_x,
             n=np_out[:, 0:1],
             phi=np_out[:, 1:2],
+            title=f"Self-Consistent Multi-Field Solutions ({formula})",
         )
         logger.info("Coupled self-consistent field visualisation saved successfully.")
 

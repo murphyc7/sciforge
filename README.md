@@ -42,12 +42,16 @@ Solves the steady-state 1D Drift-Diffusion current continuity equation under an 
 
 $$\mathcal{R}(x) = D_n \frac{d^2n}{dx^2} + \mu_n E \frac{dn}{dx} - R(x) = 0$$
 
+![Constant Field Run](example_visualisations/simulation_constant.png)
+
 ### 2. Self-Consistent Coupled Poisson Engine (`--engine coupled`)
 Solves a tightly coupled, highly non-linear multi-field system to resolve the internal electrostatic potential ($\phi$) alongside shifting charge densities ($n$) simultaneously:
 
 $$\mathcal{R}_{\text{poisson}}(x) = \frac{d^2\phi}{dx^2} + \frac{q}{\epsilon_0 \epsilon_r} \left( N_D^+ - n(x) \right) = 0$$
 
 $$\mathcal{R}_{\text{transport}}(x) = D_n \frac{d^2n}{dx^2} + \mu_n \left(-\frac{d\phi}{dx}\right) \frac{dn}{dx} + \mu_n \left(-\frac{d^2\phi}{dx^2}\right)n(x) = 0$$
+
+![Coupled Self-Consistent Run](example_visualisations/simulation_coupled.png)
 
 Where:
 * **Mobility Scaling**: Material mobility scales dynamically based on physical constraints fetched from your database: $\mu_n = \frac{0.14}{m^*}$.
