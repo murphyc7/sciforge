@@ -2,6 +2,7 @@
 import argparse
 import logging
 import sys
+import time
 
 import torch
 import torch.nn as nn
@@ -11,6 +12,7 @@ from sciforge.matkit.carrier_pinn.physics import (
     ConstantFieldPhysics,
     PoissonCoupledPhysics,
 )
+from sciforge.matkit.registry.manager import SimulationTracker
 from sciforge.matkit.utils.db_client import DatabaseClient, MaterialModel
 from sciforge.visualisation.components import DualAxisTransportPlotter
 
@@ -51,10 +53,9 @@ def main() -> None:
         formula = material.formula
 
     logger.info(
-        f"Loaded constraints for {formula}: m*={m_eff}, eps={eps} | Engine: {args.engine.upper()}"
+        f"Loaded constraints for {formula}: m*={m_eff}, eps={eps} | Mode: {args.engine.upper()}"
     )
 
-    # Both models now receive a stable spatial coordinate grid scaled between 0.0 and 1.0
     x_interior = torch.linspace(0.0, 1.0, 100, dtype=torch.float32).view(-1, 1)
     x_boundary_left = torch.tensor([[0.0]], dtype=torch.float32)
     x_boundary_right = torch.tensor([[1.0]], dtype=torch.float32)
@@ -67,35 +68,28 @@ def main() -> None:
     else:
         model = CarrierPINN(output_dim=2)
         physics_engine = PoissonCoupledPhysics(effective_mass=m_eff, permittivity=eps)
-        # Normalized boundaries matching our 1.0 scaling factor rules
-        n_boundary_left = torch.tensor(
-            [[1.0, 0.0]], dtype=torch.float32
-        )  # n=1.0, phi=0.0V
-        n_boundary_right = torch.tensor(
-            [[0.1, 0.5]], dtype=torch.float32
-        )  # n=0.1, phi=0.5V
+        n_boundary_left = torch.tensor([[1.0, 0.0]], dtype=torch.float32)
+        n_boundary_right = torch.tensor([[0.1, 0.5]], dtype=torch.float32)
 
     optimiser = torch.optim.Adam(model.parameters(), lr=1e-3)
     mse_criterion = nn.MSELoss()
 
     logger.info("Starting Physics-Informed Neural Network optimisation loop...")
+    start_time = time.time()
 
+    # Training Loop Execution
     for epoch in range(args.epochs + 1):
         optimiser.zero_grad()
 
-        # 1. Evaluate boundary mismatch
         loss_bc = mse_criterion(
             model(x_boundary_left), n_boundary_left
         ) + mse_criterion(model(x_boundary_right), n_boundary_right)
 
-        # 2. Compute stable scaled residuals
         residuals_dict = physics_engine.compute_residuals(x_interior, model)
 
-        # 3. Dynamic total loss summation loop
         loss_physics = 0.0
         for key, res in residuals_dict.items():
             if key == "poisson":
-                # Scale Poisson loss slightly to balance with the transport gradients
                 loss_physics += mse_criterion(res * 1.0e-3, torch.zeros_like(res))
             else:
                 loss_physics += mse_criterion(res, torch.zeros_like(res))
@@ -109,20 +103,20 @@ def main() -> None:
                 f"Epoch {epoch:04d} | Total Loss: {total_loss.item():.4e} | BC Mismatch: {loss_bc.item():.4e}"
             )
 
-    logger.info("Training complete. Commencing evaluation and graphics generation...")
+    # Sync eval, plotting, MLOPS registration phase
+    logger.info("Simulation complete. Commencing evaluation and graphics generation...")
+
+    # 1. Switch model to static evaluation mode and extract raw values safely
     model.eval()
     with torch.no_grad():
-        # Evaluate final predictions across the unified spatial coordinate grid
         final_predictions = model(x_interior)
-
-        # Convert PyTorch internal tensors safely back into standard NumPy arrays
         np_x = x_interior.cpu().numpy()
         np_out = final_predictions.cpu().numpy()
 
+    # 2. Initialise scientific plotting layer
     plotter = DualAxisTransportPlotter()
 
     if args.engine == "constant":
-        # Pass data cleanly using flexible keyword argument variables
         plotter.render(
             save_path="example_visualisations/simulation_constant.png",
             x=np_x,
@@ -139,6 +133,29 @@ def main() -> None:
             title=f"Self-Consistent Multi-Field Solutions ({formula})",
         )
         logger.info("Coupled self-consistent field visualisation saved successfully.")
+
+    # 3. Package numeric primitives for MLOps ledger tracking
+    val_total = float(total_loss.item())
+    val_bc = float(loss_bc.item())
+    val_physics = (
+        float(loss_physics.item())
+        if isinstance(loss_physics, torch.Tensor)
+        else float(loss_physics)
+    )
+
+    logger.info("Proceeding to MLOps database serialisation step...")
+    tracker = SimulationTracker(db_client=db_client)
+    tracker.register_run(
+        material_id=args.material_id,
+        engine_mode=args.engine,
+        epochs=args.epochs,
+        lr=1e-3,
+        total_loss=val_total,
+        bc_loss=val_bc,
+        physics_loss=val_physics,
+        start_time=start_time,
+        model=model,
+    )
 
 
 if __name__ == "__main__":

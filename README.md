@@ -101,6 +101,26 @@ pytest test/
 
 ---
 
+## MLOps Tracking Ledger & Model Registry
+
+To ensure strict scientific reproducibility across compute cycles, the platform decouples training runs from unversioned local checkpoints by executing a fully automated **Model Tracking Registry**.
+
+### 1. Binary Schema Representation
+Every simulation iteration logs metadata onto a normalized 1-to-many relationship tracking layout inside PostgreSQL:
+* **Hyperparameter Auditing**: Logs exact learning rate targets, optimisation step boundary counts, and runtime execution speed benchmarks.
+* **Convergence Error Breakdown**: Separately tracks aggregate minimisation loss profiles alongside individual data mismatches and physical PDE residual variances.
+
+### 2. Industry-Standard ONNX Serialization
+Rather than storing volatile framework-specific model states, the registry converts dynamic neural network weights into static **ONNX (Open Neural Network Exchange)** blueprints. This compiles the mathematical weights into an interoperable format ready to deploy to embedded production lines or low-latency hardware runtimes.
+
+### 3. Querying the Ledger
+To inspect historical simulation runs directly from the terminal, query the tracking rows vertically:
+```bash
+PGPASSWORD="secure_pass" psql -h localhost -U postgres_user -d sciforge_db -x -c "SELECT * FROM carrier_pinn_simulation_registry;"
+```
+
+---
+
 ## Automated Code Manuals
 
 Detailed code architecture documentation is generated using Sphinx and hosted live on GitHub Pages. To review the modules locally, compile the HTML build outputs:
