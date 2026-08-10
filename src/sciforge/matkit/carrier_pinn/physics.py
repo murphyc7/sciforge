@@ -24,7 +24,7 @@ class BasePhysicsSolver(ABC):
 
 
 class ConstantFieldPhysics(BasePhysicsSolver):
-    """Evaluates the 1D Drift-Diffusion equation under a static, uniform electric field.
+    r"""Evaluates the 1D Drift-Diffusion equation under a static, uniform electric field.
 
     Enforces steady-state charge carrier conservation assuming a constant acceleration profile.
     The underlying governing partial differential equation is defined as:
@@ -43,7 +43,7 @@ class ConstantFieldPhysics(BasePhysicsSolver):
         mobility (float): Electron mobility in :math:`\text{m}^2/(\text{V}\cdot\text{s})`.
         diffusion_coeff (float): Diffusion coefficient in :math:`\text{m}^2/\text{s}`.
         electric_field (float): Applied background uniform electric field in V/m.
-    """  # noqa: W605
+    """
 
     def __init__(
         self, effective_mass: float, permittivity: float, electric_field: float = 1.0e3
@@ -132,7 +132,7 @@ class ConstantFieldPhysics(BasePhysicsSolver):
 
 
 class PoissonCoupledPhysics(BasePhysicsSolver):
-    """Evaluates highly non-linear self-consistent coupled Poisson and Drift-Diffusion loops.
+    r"""Evaluates highly non-linear self-consistent coupled Poisson and Drift-Diffusion loops.
 
     Enforces space-charge electrostatic balance and current continuity simultaneously. The
     engine solves a coupled system of multi-field non-linear partial differential equations:
@@ -158,7 +158,7 @@ class PoissonCoupledPhysics(BasePhysicsSolver):
         nd (float): Uniform background n-type donor doping concentration in :math:`\text{m}^{-3}`.
         mobility (float): Electron mobility in :math:`\text{m}^2/(\text{V}\cdot\text{s})`.
         diffusion_coeff (float): Diffusion coefficient in :math:`\text{m}^2/\text{s}`.
-    """  # noqa: W605
+    """
 
     def __init__(
         self, effective_mass: float, permittivity: float, donor_doping: float = 1.0e22
@@ -189,7 +189,7 @@ class PoissonCoupledPhysics(BasePhysicsSolver):
     def compute_residuals(
         self, x_scaled: torch.Tensor, model: torch.nn.Module
     ) -> dict[str, torch.Tensor]:
-        """Calculates independent residuals for both the Poisson and Transport loops.
+        r"""Calculates independent residuals for both the Poisson and Transport loops.
 
         Extracts multi-variable outputs from the network nodes, evaluates higher-order spatial
         potentials, and tracks gradients using the autograd computational history graph.
@@ -203,7 +203,7 @@ class PoissonCoupledPhysics(BasePhysicsSolver):
             dict[str, torch.Tensor]: Dictionary containing two keys:
                 - "poisson": Electrostatic residual tensor of shape `[Batch Size, 1]`.
                 - "transport": Coupled drift-diffusion conservation tensor of shape `[Batch Size, 1]`.
-        """  # noqa: W605
+        """
         x_scaled.requires_grad_(True)
         predictions = model(x_scaled)
 

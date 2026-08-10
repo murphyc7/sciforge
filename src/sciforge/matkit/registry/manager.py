@@ -45,24 +45,24 @@ class SimulationTracker:
         artifact_name = f"pinn_model_{run_uuid}.onnx"
         full_path = os.path.join(self.artifact_dir, artifact_name)
 
-        # Build a synthetic sample input tensor matching our 1D coordinate dimension size [1, 1]
-        # This acts as a structural reference map for ONNX to trace network paths
-        dummy_input = torch.tensor([[0.5]], dtype=torch.float32)
-
         model.eval()
-        # Export the computational graph to an open interoperable format
-        torch.onnx.export(
-            model,
-            dummy_input,
-            full_path,
-            export_params=True,  # Store the trained parameter weights inside the file
-            opset_version=14,  # High-stability modern ONNX engine schema
-            input_names=["spatial_x"],  # Explicit input node naming convention mapping
-            output_names=["predicted_fields"],
-            dynamic_axes={
-                "spatial_x": {0: "batch_size"}
-            },  # Support arbitrary batch evaluation grids
+        dummy_input = torch.linspace(0.0, 1.0, 10, dtype=torch.float32).view(-1, 1)
+
+        logger.info(
+            f"Executing static path ONNX graph compilation to target: {full_path}"
         )
+        with torch.no_grad():
+            torch.onnx.export(
+                model,
+                dummy_input,
+                full_path,
+                export_params=True,
+                opset_version=15,
+                input_names=["spatial_x"],
+                output_names=["predicted_fields"],
+                dynamic_axes={"spatial_x": {0: "batch_size"}},
+            )
+
         return full_path
 
     def register_run(
@@ -93,14 +93,12 @@ class SimulationTracker:
         Returns:
             int: Automated sequential run_id primary key index tracking the logged row.
         """
-        # Calculate execution speed metrics accurately
         duration = time.time() - start_time
         run_timestamp = str(int(time.time()))
 
-        logger.info("Serialising optimised computational network profiles to ONNX...")
+        # Export exactly ONE clean file per engine run
         artifact_path = self._export_to_onnx(model, run_timestamp)
 
-        # Structure the inputs into an ORM data row matching our updated schema specifications
         record = SimulationRegistryModel(
             material_id=material_id,
             engine_mode=engine_mode,
@@ -116,12 +114,19 @@ class SimulationTracker:
         logger.info(
             "Injecting operational metadata metrics into the relational store..."
         )
-        with self.db_client.get_session() as session:
+
+        # Hard imperative session management matching your working ETL setup
+        session = self.db_client.get_session()
+        try:
             session.add(record)
-            session.commit()
-            # Refresh context to pull the newly generated sequential run_id primary key
-            session.refresh(record)
-            generated_id = int(record.run_id)
+            session.commit()  # Forces the database socket to flush natively to PostgreSQL disk
+            generated_id = record.run_id
+        except Exception as e:
+            session.rollback()
+            logger.error(f"Relational transaction aborted and rolled back: {e}")
+            raise e
+        finally:
+            session.close()
 
         logger.info(f"Run successfully registered under reference ID: {generated_id}")
         return generated_id
