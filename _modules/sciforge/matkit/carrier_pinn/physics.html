@@ -100,7 +100,7 @@
 <div class="viewcode-block" id="ConstantFieldPhysics">
 <a class="viewcode-back" href="../../../../index.html#sciforge.matkit.carrier_pinn.physics.ConstantFieldPhysics">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ConstantFieldPhysics</span><span class="p">(</span><span class="n">BasePhysicsSolver</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Evaluates the 1D Drift-Diffusion equation under a static, uniform electric field.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Evaluates the 1D Drift-Diffusion equation under a static, uniform electric field.</span>
 
 <span class="sd">    Enforces steady-state charge carrier conservation assuming a constant acceleration profile.</span>
 <span class="sd">    The underlying governing partial differential equation is defined as:</span>
@@ -119,7 +119,7 @@
 <span class="sd">        mobility (float): Electron mobility in :math:`\text{m}^2/(\text{V}\cdot\text{s})`.</span>
 <span class="sd">        diffusion_coeff (float): Diffusion coefficient in :math:`\text{m}^2/\text{s}`.</span>
 <span class="sd">        electric_field (float): Applied background uniform electric field in V/m.</span>
-<span class="sd">    &quot;&quot;&quot;</span>  <span class="c1"># noqa: W605</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">effective_mass</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">permittivity</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">electric_field</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0e3</span>
@@ -214,7 +214,7 @@
 <div class="viewcode-block" id="PoissonCoupledPhysics">
 <a class="viewcode-back" href="../../../../index.html#sciforge.matkit.carrier_pinn.physics.PoissonCoupledPhysics">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PoissonCoupledPhysics</span><span class="p">(</span><span class="n">BasePhysicsSolver</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Evaluates highly non-linear self-consistent coupled Poisson and Drift-Diffusion loops.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Evaluates highly non-linear self-consistent coupled Poisson and Drift-Diffusion loops.</span>
 
 <span class="sd">    Enforces space-charge electrostatic balance and current continuity simultaneously. The</span>
 <span class="sd">    engine solves a coupled system of multi-field non-linear partial differential equations:</span>
@@ -240,7 +240,7 @@
 <span class="sd">        nd (float): Uniform background n-type donor doping concentration in :math:`\text{m}^{-3}`.</span>
 <span class="sd">        mobility (float): Electron mobility in :math:`\text{m}^2/(\text{V}\cdot\text{s})`.</span>
 <span class="sd">        diffusion_coeff (float): Diffusion coefficient in :math:`\text{m}^2/\text{s}`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>  <span class="c1"># noqa: W605</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">effective_mass</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">permittivity</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">donor_doping</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0e22</span>
@@ -273,7 +273,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_residuals</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">x_scaled</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculates independent residuals for both the Poisson and Transport loops.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Calculates independent residuals for both the Poisson and Transport loops.</span>
 
 <span class="sd">        Extracts multi-variable outputs from the network nodes, evaluates higher-order spatial</span>
 <span class="sd">        potentials, and tracks gradients using the autograd computational history graph.</span>
@@ -287,7 +287,7 @@
 <span class="sd">            dict[str, torch.Tensor]: Dictionary containing two keys:</span>
 <span class="sd">                - &quot;poisson&quot;: Electrostatic residual tensor of shape `[Batch Size, 1]`.</span>
 <span class="sd">                - &quot;transport&quot;: Coupled drift-diffusion conservation tensor of shape `[Batch Size, 1]`.</span>
-<span class="sd">        &quot;&quot;&quot;</span>  <span class="c1"># noqa: W605</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">x_scaled</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">predictions</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">x_scaled</span><span class="p">)</span>
 

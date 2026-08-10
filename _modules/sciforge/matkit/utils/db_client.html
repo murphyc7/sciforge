@@ -72,7 +72,16 @@
 <span class="sd">physical tables, and exposes transactional sessions to downstream pipelines.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy</span><span class="w"> </span><span class="kn">import</span> <span class="n">Column</span><span class="p">,</span> <span class="n">Float</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">String</span><span class="p">,</span> <span class="n">create_engine</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Column</span><span class="p">,</span>
+    <span class="n">DateTime</span><span class="p">,</span>
+    <span class="n">Float</span><span class="p">,</span>
+    <span class="n">ForeignKey</span><span class="p">,</span>
+    <span class="n">Integer</span><span class="p">,</span>
+    <span class="n">String</span><span class="p">,</span>
+    <span class="n">create_engine</span><span class="p">,</span>
+    <span class="n">func</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy.orm</span><span class="w"> </span><span class="kn">import</span> <span class="n">declarative_base</span><span class="p">,</span> <span class="n">sessionmaker</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">sciforge.matkit.utils.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">Config</span>
@@ -118,7 +127,9 @@
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialises the database engine and configures transactional session factories.&quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">engine</span> <span class="o">=</span> <span class="n">create_engine</span><span class="p">(</span><span class="n">Config</span><span class="o">.</span><span class="n">DB_URL</span><span class="p">,</span> <span class="n">pool_size</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">max_overflow</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">engine</span> <span class="o">=</span> <span class="n">create_engine</span><span class="p">(</span>
+            <span class="n">Config</span><span class="o">.</span><span class="n">DB_URL</span><span class="p">,</span> <span class="n">pool_size</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">max_overflow</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">pool_pre_ping</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">SessionLocal</span> <span class="o">=</span> <span class="n">sessionmaker</span><span class="p">(</span>
             <span class="n">bind</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">engine</span><span class="p">,</span> <span class="n">autoflush</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">autocommit</span><span class="o">=</span><span class="kc">False</span>
         <span class="p">)</span>
@@ -140,6 +151,48 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">SessionLocal</span><span class="p">()</span></div>
 </div>
+
+
+
+<div class="viewcode-block" id="SimulationRegistryModel">
+<a class="viewcode-back" href="../../../../index.html#sciforge.matkit.utils.db_client.SimulationRegistryModel">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SimulationRegistryModel</span><span class="p">(</span><span class="n">Base</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;SQLAlchemy object-relational mapping for tracking PINN training metrics and artifacts.</span>
+
+<span class="sd">    Acts as an immutable operational ledger logging hyperparameters, convergence constraints,</span>
+<span class="sd">    and references to the structural model export files.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        run_id (int): Automatically incremented unique execution primary key identifier.</span>
+<span class="sd">        material_id (str): Foreign key linking back to the matching entry in the materials table.</span>
+<span class="sd">        engine_mode (str): Flag defining the physics module style chosen (&#39;constant&#39;/&#39;coupled&#39;).</span>
+<span class="sd">        epochs_trained (int): Complete optimisation step iteration boundaries executed.</span>
+<span class="sd">        learning_rate (float): Active step optimisation size scalar coefficient.</span>
+<span class="sd">        final_total_loss (float): Aggregate system minimisation loss at the final epoch step.</span>
+<span class="sd">        final_bc_loss (float): Boundary condition error metrics calculated at runtime exit.</span>
+<span class="sd">        final_physics_loss (float): Physical residual calculus errors recorded at execution.</span>
+<span class="sd">        execution_time_seconds (float): Absolute duration processing bounds tracking execution.</span>
+<span class="sd">        model_artifact_path (str): Relative system storage destination mapping the ONNX export file.</span>
+<span class="sd">        created_at (datetime): Chronological registration timestamp generated by PostgreSQL.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">__tablename__</span> <span class="o">=</span> <span class="s2">&quot;carrier_pinn_simulation_registry&quot;</span>
+
+    <span class="n">run_id</span><span class="p">:</span> <span class="n">Column</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">autoincrement</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">material_id</span><span class="p">:</span> <span class="n">Column</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span>
+        <span class="n">String</span><span class="p">(</span><span class="mi">50</span><span class="p">),</span>
+        <span class="n">ForeignKey</span><span class="p">(</span><span class="s2">&quot;materials.material_id&quot;</span><span class="p">,</span> <span class="n">ondelete</span><span class="o">=</span><span class="s2">&quot;CASCADE&quot;</span><span class="p">),</span>
+        <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">engine_mode</span><span class="p">:</span> <span class="n">Column</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">20</span><span class="p">),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">epochs_trained</span><span class="p">:</span> <span class="n">Column</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">learning_rate</span><span class="p">:</span> <span class="n">Column</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Float</span><span class="p">,</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">final_total_loss</span><span class="p">:</span> <span class="n">Column</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Float</span><span class="p">,</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">final_bc_loss</span><span class="p">:</span> <span class="n">Column</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Float</span><span class="p">,</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">final_physics_loss</span><span class="p">:</span> <span class="n">Column</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Float</span><span class="p">,</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">execution_time_seconds</span><span class="p">:</span> <span class="n">Column</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Float</span><span class="p">,</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">model_artifact_path</span><span class="p">:</span> <span class="n">Column</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">512</span><span class="p">),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">created_at</span><span class="p">:</span> <span class="n">Column</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">DateTime</span><span class="p">,</span> <span class="n">server_default</span><span class="o">=</span><span class="n">func</span><span class="o">.</span><span class="n">now</span><span class="p">())</span></div>
 
 </pre></div>
 

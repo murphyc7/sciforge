@@ -64,6 +64,31 @@
 <li><a class="reference internal" href="#id4"><code class="docutils literal notranslate"><span class="pre">MaterialModel.space_group</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#sciforge.matkit.utils.db_client.SimulationRegistryModel"><code class="docutils literal notranslate"><span class="pre">SimulationRegistryModel</span></code></a><ul>
+<li><a class="reference internal" href="#sciforge.matkit.utils.db_client.SimulationRegistryModel.run_id"><code class="docutils literal notranslate"><span class="pre">SimulationRegistryModel.run_id</span></code></a></li>
+<li><a class="reference internal" href="#sciforge.matkit.utils.db_client.SimulationRegistryModel.material_id"><code class="docutils literal notranslate"><span class="pre">SimulationRegistryModel.material_id</span></code></a></li>
+<li><a class="reference internal" href="#sciforge.matkit.utils.db_client.SimulationRegistryModel.engine_mode"><code class="docutils literal notranslate"><span class="pre">SimulationRegistryModel.engine_mode</span></code></a></li>
+<li><a class="reference internal" href="#sciforge.matkit.utils.db_client.SimulationRegistryModel.epochs_trained"><code class="docutils literal notranslate"><span class="pre">SimulationRegistryModel.epochs_trained</span></code></a></li>
+<li><a class="reference internal" href="#sciforge.matkit.utils.db_client.SimulationRegistryModel.learning_rate"><code class="docutils literal notranslate"><span class="pre">SimulationRegistryModel.learning_rate</span></code></a></li>
+<li><a class="reference internal" href="#sciforge.matkit.utils.db_client.SimulationRegistryModel.final_total_loss"><code class="docutils literal notranslate"><span class="pre">SimulationRegistryModel.final_total_loss</span></code></a></li>
+<li><a class="reference internal" href="#sciforge.matkit.utils.db_client.SimulationRegistryModel.final_bc_loss"><code class="docutils literal notranslate"><span class="pre">SimulationRegistryModel.final_bc_loss</span></code></a></li>
+<li><a class="reference internal" href="#sciforge.matkit.utils.db_client.SimulationRegistryModel.final_physics_loss"><code class="docutils literal notranslate"><span class="pre">SimulationRegistryModel.final_physics_loss</span></code></a></li>
+<li><a class="reference internal" href="#sciforge.matkit.utils.db_client.SimulationRegistryModel.execution_time_seconds"><code class="docutils literal notranslate"><span class="pre">SimulationRegistryModel.execution_time_seconds</span></code></a></li>
+<li><a class="reference internal" href="#sciforge.matkit.utils.db_client.SimulationRegistryModel.model_artifact_path"><code class="docutils literal notranslate"><span class="pre">SimulationRegistryModel.model_artifact_path</span></code></a></li>
+<li><a class="reference internal" href="#sciforge.matkit.utils.db_client.SimulationRegistryModel.created_at"><code class="docutils literal notranslate"><span class="pre">SimulationRegistryModel.created_at</span></code></a></li>
+<li><a class="reference internal" href="#id5"><code class="docutils literal notranslate"><span class="pre">SimulationRegistryModel.created_at</span></code></a></li>
+<li><a class="reference internal" href="#id6"><code class="docutils literal notranslate"><span class="pre">SimulationRegistryModel.engine_mode</span></code></a></li>
+<li><a class="reference internal" href="#id7"><code class="docutils literal notranslate"><span class="pre">SimulationRegistryModel.epochs_trained</span></code></a></li>
+<li><a class="reference internal" href="#id8"><code class="docutils literal notranslate"><span class="pre">SimulationRegistryModel.execution_time_seconds</span></code></a></li>
+<li><a class="reference internal" href="#id9"><code class="docutils literal notranslate"><span class="pre">SimulationRegistryModel.final_bc_loss</span></code></a></li>
+<li><a class="reference internal" href="#id10"><code class="docutils literal notranslate"><span class="pre">SimulationRegistryModel.final_physics_loss</span></code></a></li>
+<li><a class="reference internal" href="#id11"><code class="docutils literal notranslate"><span class="pre">SimulationRegistryModel.final_total_loss</span></code></a></li>
+<li><a class="reference internal" href="#id12"><code class="docutils literal notranslate"><span class="pre">SimulationRegistryModel.learning_rate</span></code></a></li>
+<li><a class="reference internal" href="#id13"><code class="docutils literal notranslate"><span class="pre">SimulationRegistryModel.material_id</span></code></a></li>
+<li><a class="reference internal" href="#id14"><code class="docutils literal notranslate"><span class="pre">SimulationRegistryModel.model_artifact_path</span></code></a></li>
+<li><a class="reference internal" href="#id15"><code class="docutils literal notranslate"><span class="pre">SimulationRegistryModel.run_id</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#sciforge.matkit.pipeline.etl_process.MaterialETLPipeline"><code class="docutils literal notranslate"><span class="pre">MaterialETLPipeline</span></code></a><ul>
 <li><a class="reference internal" href="#sciforge.matkit.pipeline.etl_process.MaterialETLPipeline.run"><code class="docutils literal notranslate"><span class="pre">MaterialETLPipeline.run()</span></code></a></li>
 </ul>
@@ -85,10 +110,22 @@
 </ul>
 </li>
 <li><a class="reference internal" href="#sciforge.matkit.carrier_pinn.physics.ConstantFieldPhysics"><code class="docutils literal notranslate"><span class="pre">ConstantFieldPhysics</span></code></a><ul>
+<li><a class="reference internal" href="#sciforge.matkit.carrier_pinn.physics.ConstantFieldPhysics.q"><code class="docutils literal notranslate"><span class="pre">ConstantFieldPhysics.q</span></code></a></li>
+<li><a class="reference internal" href="#sciforge.matkit.carrier_pinn.physics.ConstantFieldPhysics.kb_t"><code class="docutils literal notranslate"><span class="pre">ConstantFieldPhysics.kb_t</span></code></a></li>
+<li><a class="reference internal" href="#sciforge.matkit.carrier_pinn.physics.ConstantFieldPhysics.mobility"><code class="docutils literal notranslate"><span class="pre">ConstantFieldPhysics.mobility</span></code></a></li>
+<li><a class="reference internal" href="#sciforge.matkit.carrier_pinn.physics.ConstantFieldPhysics.diffusion_coeff"><code class="docutils literal notranslate"><span class="pre">ConstantFieldPhysics.diffusion_coeff</span></code></a></li>
+<li><a class="reference internal" href="#sciforge.matkit.carrier_pinn.physics.ConstantFieldPhysics.electric_field"><code class="docutils literal notranslate"><span class="pre">ConstantFieldPhysics.electric_field</span></code></a></li>
 <li><a class="reference internal" href="#sciforge.matkit.carrier_pinn.physics.ConstantFieldPhysics.compute_residuals"><code class="docutils literal notranslate"><span class="pre">ConstantFieldPhysics.compute_residuals()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#sciforge.matkit.carrier_pinn.physics.PoissonCoupledPhysics"><code class="docutils literal notranslate"><span class="pre">PoissonCoupledPhysics</span></code></a><ul>
+<li><a class="reference internal" href="#sciforge.matkit.carrier_pinn.physics.PoissonCoupledPhysics.q"><code class="docutils literal notranslate"><span class="pre">PoissonCoupledPhysics.q</span></code></a></li>
+<li><a class="reference internal" href="#sciforge.matkit.carrier_pinn.physics.PoissonCoupledPhysics.kb_t"><code class="docutils literal notranslate"><span class="pre">PoissonCoupledPhysics.kb_t</span></code></a></li>
+<li><a class="reference internal" href="#sciforge.matkit.carrier_pinn.physics.PoissonCoupledPhysics.eps0"><code class="docutils literal notranslate"><span class="pre">PoissonCoupledPhysics.eps0</span></code></a></li>
+<li><a class="reference internal" href="#sciforge.matkit.carrier_pinn.physics.PoissonCoupledPhysics.eps_r"><code class="docutils literal notranslate"><span class="pre">PoissonCoupledPhysics.eps_r</span></code></a></li>
+<li><a class="reference internal" href="#sciforge.matkit.carrier_pinn.physics.PoissonCoupledPhysics.nd"><code class="docutils literal notranslate"><span class="pre">PoissonCoupledPhysics.nd</span></code></a></li>
+<li><a class="reference internal" href="#sciforge.matkit.carrier_pinn.physics.PoissonCoupledPhysics.mobility"><code class="docutils literal notranslate"><span class="pre">PoissonCoupledPhysics.mobility</span></code></a></li>
+<li><a class="reference internal" href="#sciforge.matkit.carrier_pinn.physics.PoissonCoupledPhysics.diffusion_coeff"><code class="docutils literal notranslate"><span class="pre">PoissonCoupledPhysics.diffusion_coeff</span></code></a></li>
 <li><a class="reference internal" href="#sciforge.matkit.carrier_pinn.physics.PoissonCoupledPhysics.compute_residuals"><code class="docutils literal notranslate"><span class="pre">PoissonCoupledPhysics.compute_residuals()</span></code></a></li>
 </ul>
 </li>
@@ -271,6 +308,191 @@ schema structure to act as analytical baselines.</p>
 
 </dd></dl>
 
+<dl class="py class">
+<dt class="sig sig-object py" id="sciforge.matkit.utils.db_client.SimulationRegistryModel">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sciforge.matkit.utils.db_client.</span></span><span class="sig-name descname"><span class="pre">SimulationRegistryModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sciforge/matkit/utils/db_client.html#SimulationRegistryModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sciforge.matkit.utils.db_client.SimulationRegistryModel" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Base</span></code></p>
+<p>SQLAlchemy object-relational mapping for tracking PINN training metrics and artifacts.</p>
+<p>Acts as an immutable operational ledger logging hyperparameters, convergence constraints,
+and references to the structural model export files.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sciforge.matkit.utils.db_client.SimulationRegistryModel.run_id">
+<span class="sig-name descname"><span class="pre">run_id</span></span><a class="headerlink" href="#sciforge.matkit.utils.db_client.SimulationRegistryModel.run_id" title="Link to this definition"></a></dt>
+<dd><p>Automatically incremented unique execution primary key identifier.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sciforge.matkit.utils.db_client.SimulationRegistryModel.material_id">
+<span class="sig-name descname"><span class="pre">material_id</span></span><a class="headerlink" href="#sciforge.matkit.utils.db_client.SimulationRegistryModel.material_id" title="Link to this definition"></a></dt>
+<dd><p>Foreign key linking back to the matching entry in the materials table.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sciforge.matkit.utils.db_client.SimulationRegistryModel.engine_mode">
+<span class="sig-name descname"><span class="pre">engine_mode</span></span><a class="headerlink" href="#sciforge.matkit.utils.db_client.SimulationRegistryModel.engine_mode" title="Link to this definition"></a></dt>
+<dd><p>Flag defining the physics module style chosen (‘constant’/’coupled’).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sciforge.matkit.utils.db_client.SimulationRegistryModel.epochs_trained">
+<span class="sig-name descname"><span class="pre">epochs_trained</span></span><a class="headerlink" href="#sciforge.matkit.utils.db_client.SimulationRegistryModel.epochs_trained" title="Link to this definition"></a></dt>
+<dd><p>Complete optimisation step iteration boundaries executed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sciforge.matkit.utils.db_client.SimulationRegistryModel.learning_rate">
+<span class="sig-name descname"><span class="pre">learning_rate</span></span><a class="headerlink" href="#sciforge.matkit.utils.db_client.SimulationRegistryModel.learning_rate" title="Link to this definition"></a></dt>
+<dd><p>Active step optimisation size scalar coefficient.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sciforge.matkit.utils.db_client.SimulationRegistryModel.final_total_loss">
+<span class="sig-name descname"><span class="pre">final_total_loss</span></span><a class="headerlink" href="#sciforge.matkit.utils.db_client.SimulationRegistryModel.final_total_loss" title="Link to this definition"></a></dt>
+<dd><p>Aggregate system minimisation loss at the final epoch step.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sciforge.matkit.utils.db_client.SimulationRegistryModel.final_bc_loss">
+<span class="sig-name descname"><span class="pre">final_bc_loss</span></span><a class="headerlink" href="#sciforge.matkit.utils.db_client.SimulationRegistryModel.final_bc_loss" title="Link to this definition"></a></dt>
+<dd><p>Boundary condition error metrics calculated at runtime exit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sciforge.matkit.utils.db_client.SimulationRegistryModel.final_physics_loss">
+<span class="sig-name descname"><span class="pre">final_physics_loss</span></span><a class="headerlink" href="#sciforge.matkit.utils.db_client.SimulationRegistryModel.final_physics_loss" title="Link to this definition"></a></dt>
+<dd><p>Physical residual calculus errors recorded at execution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sciforge.matkit.utils.db_client.SimulationRegistryModel.execution_time_seconds">
+<span class="sig-name descname"><span class="pre">execution_time_seconds</span></span><a class="headerlink" href="#sciforge.matkit.utils.db_client.SimulationRegistryModel.execution_time_seconds" title="Link to this definition"></a></dt>
+<dd><p>Absolute duration processing bounds tracking execution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sciforge.matkit.utils.db_client.SimulationRegistryModel.model_artifact_path">
+<span class="sig-name descname"><span class="pre">model_artifact_path</span></span><a class="headerlink" href="#sciforge.matkit.utils.db_client.SimulationRegistryModel.model_artifact_path" title="Link to this definition"></a></dt>
+<dd><p>Relative system storage destination mapping the ONNX export file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sciforge.matkit.utils.db_client.SimulationRegistryModel.created_at">
+<span class="sig-name descname"><span class="pre">created_at</span></span><a class="headerlink" href="#sciforge.matkit.utils.db_client.SimulationRegistryModel.created_at" title="Link to this definition"></a></dt>
+<dd><p>Chronological registration timestamp generated by PostgreSQL.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>datetime</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id5">
+<span class="sig-name descname"><span class="pre">created_at</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Column</span></span><a class="headerlink" href="#id5" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id6">
+<span class="sig-name descname"><span class="pre">engine_mode</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Column</span></span><a class="headerlink" href="#id6" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id7">
+<span class="sig-name descname"><span class="pre">epochs_trained</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Column</span></span><a class="headerlink" href="#id7" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id8">
+<span class="sig-name descname"><span class="pre">execution_time_seconds</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Column</span></span><a class="headerlink" href="#id8" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id9">
+<span class="sig-name descname"><span class="pre">final_bc_loss</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Column</span></span><a class="headerlink" href="#id9" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id10">
+<span class="sig-name descname"><span class="pre">final_physics_loss</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Column</span></span><a class="headerlink" href="#id10" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id11">
+<span class="sig-name descname"><span class="pre">final_total_loss</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Column</span></span><a class="headerlink" href="#id11" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id12">
+<span class="sig-name descname"><span class="pre">learning_rate</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Column</span></span><a class="headerlink" href="#id12" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id13">
+<span class="sig-name descname"><span class="pre">material_id</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Column</span></span><a class="headerlink" href="#id13" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id14">
+<span class="sig-name descname"><span class="pre">model_artifact_path</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Column</span></span><a class="headerlink" href="#id14" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id15">
+<span class="sig-name descname"><span class="pre">run_id</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Column</span></span><a class="headerlink" href="#id15" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
 <p id="module-sciforge.matkit.pipeline.etl_process">Data Engineering Extract, Transform, and Load (ETL) processing components.</p>
 <p>Ingests nested JSON parameters from physics clients, cleans layout structures,
 and saves them to relational tables.</p>
@@ -404,27 +626,68 @@ Tangent (Tanh) activation functions to calculate stable higher-order derivatives
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sciforge.matkit.carrier_pinn.physics.</span></span><span class="sig-name descname"><span class="pre">ConstantFieldPhysics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">effective_mass</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permittivity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">electric_field</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1000.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sciforge/matkit/carrier_pinn/physics.html#ConstantFieldPhysics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sciforge.matkit.carrier_pinn.physics.ConstantFieldPhysics" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#sciforge.matkit.carrier_pinn.physics.BasePhysicsSolver" title="sciforge.matkit.carrier_pinn.physics.BasePhysicsSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasePhysicsSolver</span></code></a></p>
 <p>Evaluates the 1D Drift-Diffusion equation under a static, uniform electric field.</p>
-<blockquote>
-<div><p>Enforces steady-state charge carrier conservation assuming a constant acceleration profile.
+<p>Enforces steady-state charge carrier conservation assuming a constant acceleration profile.
 The underlying governing partial differential equation is defined as:</p>
 <div class="math notranslate nohighlight">
-\[\mathcal{R}(x) = D_n\]</div>
-</div></blockquote>
-<p>rac{d^2n}{dx^2} + mu_n E
-rac{dn}{dx} = 0</p>
-<blockquote>
-<div><p>Where <span class="math notranslate nohighlight">\(\mu_n\)</span> is the mobility inversely proportional to the material’s effective mass,
+\[\mathcal{R}(x) = D_n \frac{d^2n}{dx^2} + \mu_n E \frac{dn}{dx} = 0\]</div>
+<p>Where <span class="math notranslate nohighlight">\(\mu_n\)</span> is the mobility inversely proportional to the material’s effective mass,
 <span class="math notranslate nohighlight">\(D_n\)</span> is the diffusion coefficient linked via the Einstein relation, and <span class="math notranslate nohighlight">\(E\)</span>
 is the static electric field.</p>
-<dl class="simple">
-<dt>Attributes:</dt><dd><p>q (float): Elementary electron charge constant in Coulombs (1.602e-19 C).
-kb_t (float): Thermal energy constant at 300K in Joules.
-mobility (float): Electron mobility in :math:`  ext{m}^2/(      ext{V}cdot     ext{s})`.
-diffusion_coeff (float): Diffusion coefficient in :math:`       ext{m}^2/       ext{s}`.
-electric_field (float): Applied background uniform electric field in V/m.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sciforge.matkit.carrier_pinn.physics.ConstantFieldPhysics.q">
+<span class="sig-name descname"><span class="pre">q</span></span><a class="headerlink" href="#sciforge.matkit.carrier_pinn.physics.ConstantFieldPhysics.q" title="Link to this definition"></a></dt>
+<dd><p>Elementary electron charge constant in Coulombs (1.602e-19 C).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
 </dd>
 </dl>
-</div></blockquote>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sciforge.matkit.carrier_pinn.physics.ConstantFieldPhysics.kb_t">
+<span class="sig-name descname"><span class="pre">kb_t</span></span><a class="headerlink" href="#sciforge.matkit.carrier_pinn.physics.ConstantFieldPhysics.kb_t" title="Link to this definition"></a></dt>
+<dd><p>Thermal energy constant at 300K in Joules.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sciforge.matkit.carrier_pinn.physics.ConstantFieldPhysics.mobility">
+<span class="sig-name descname"><span class="pre">mobility</span></span><a class="headerlink" href="#sciforge.matkit.carrier_pinn.physics.ConstantFieldPhysics.mobility" title="Link to this definition"></a></dt>
+<dd><p>Electron mobility in <span class="math notranslate nohighlight">\(\text{m}^2/(\text{V}\cdot\text{s})\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sciforge.matkit.carrier_pinn.physics.ConstantFieldPhysics.diffusion_coeff">
+<span class="sig-name descname"><span class="pre">diffusion_coeff</span></span><a class="headerlink" href="#sciforge.matkit.carrier_pinn.physics.ConstantFieldPhysics.diffusion_coeff" title="Link to this definition"></a></dt>
+<dd><p>Diffusion coefficient in <span class="math notranslate nohighlight">\(\text{m}^2/\text{s}\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sciforge.matkit.carrier_pinn.physics.ConstantFieldPhysics.electric_field">
+<span class="sig-name descname"><span class="pre">electric_field</span></span><a class="headerlink" href="#sciforge.matkit.carrier_pinn.physics.ConstantFieldPhysics.electric_field" title="Link to this definition"></a></dt>
+<dd><p>Applied background uniform electric field in V/m.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="sciforge.matkit.carrier_pinn.physics.ConstantFieldPhysics.compute_residuals">
 <span class="sig-name descname"><span class="pre">compute_residuals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_scaled</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Module</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/sciforge/matkit/carrier_pinn/physics.html#ConstantFieldPhysics.compute_residuals"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sciforge.matkit.carrier_pinn.physics.ConstantFieldPhysics.compute_residuals" title="Link to this definition"></a></dt>
@@ -456,42 +719,93 @@ electric_field (float): Applied background uniform electric field in V/m.</p>
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sciforge.matkit.carrier_pinn.physics.</span></span><span class="sig-name descname"><span class="pre">PoissonCoupledPhysics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">effective_mass</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permittivity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">donor_doping</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1e+22</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sciforge/matkit/carrier_pinn/physics.html#PoissonCoupledPhysics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sciforge.matkit.carrier_pinn.physics.PoissonCoupledPhysics" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#sciforge.matkit.carrier_pinn.physics.BasePhysicsSolver" title="sciforge.matkit.carrier_pinn.physics.BasePhysicsSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasePhysicsSolver</span></code></a></p>
 <p>Evaluates highly non-linear self-consistent coupled Poisson and Drift-Diffusion loops.</p>
-<blockquote>
-<div><p>Enforces space-charge electrostatic balance and current continuity simultaneously. The
+<p>Enforces space-charge electrostatic balance and current continuity simultaneously. The
 engine solves a coupled system of multi-field non-linear partial differential equations:</p>
 <div class="math notranslate nohighlight">
-\[\mathcal{R}_{    ext{poisson}}(x) =\]</div>
-</div></blockquote>
-<p>rac{d^2phi}{dx^2} +
-rac{q}{epsilon_0 epsilon_r}</p>
-<blockquote>
-<div><p>left( N_D^+ - n(x)</p>
-</div></blockquote>
-<p>ight) = 0</p>
-<blockquote>
-<div><div class="math notranslate nohighlight">
-\[\mathcal{R}_{    ext{transport}}(x) = D_n\]</div>
-</div></blockquote>
-<p>rac{d^2n}{dx^2} + mu_n left(-
-rac{dphi}{dx}</p>
-<p>ight)
-rac{dn}{dx} + mu_n left(-
-rac{d^2phi}{dx^2}
-ight)n(x) = 0</p>
-<blockquote>
-<div><p>Where <span class="math notranslate nohighlight">\(\phi(x)\)</span> represents the local electrostatic potential, <span class="math notranslate nohighlight">\(n(x)\)</span> is the
+\[\mathcal{R}_{\text{poisson}}(x) = \frac{d^2\phi}{dx^2} + \frac{q}{\epsilon_0 \epsilon_r}
+\left( N_D^+ - n(x) \right) = 0\]</div>
+<div class="math notranslate nohighlight">
+\[\mathcal{R}_{\text{transport}}(x) = D_n \frac{d^2n}{dx^2} + \mu_n \left(-\frac{d\phi}{dx}
+\right) \frac{dn}{dx} + \mu_n \left(-\frac{d^2\phi}{dx^2}\right)n(x) = 0\]</div>
+<p>Where <span class="math notranslate nohighlight">\(\phi(x)\)</span> represents the local electrostatic potential, <span class="math notranslate nohighlight">\(n(x)\)</span> is the
 carrier concentration, and <span class="math notranslate nohighlight">\(N_D^+\)</span> is the background donor doping density.</p>
-<dl class="simple">
-<dt>Attributes:</dt><dd><p>q (float): Elementary electron charge constant in Coulombs (1.602e-19 C).
-kb_t (float): Thermal energy constant at 300K in Joules.
-eps0 (float): Vacuum permittivity constant in Farads per meter (8.854e-12 F/m).
-eps_r (float): Relative material static dielectric constant.
-nd (float): Uniform background n-type donor doping concentration in :math:`     ext{m}^{-3}`.
-mobility (float): Electron mobility in :math:`  ext{m}^2/(      ext{V}cdot     ext{s})`.
-diffusion_coeff (float): Diffusion coefficient in :math:`       ext{m}^2/       ext{s}`.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sciforge.matkit.carrier_pinn.physics.PoissonCoupledPhysics.q">
+<span class="sig-name descname"><span class="pre">q</span></span><a class="headerlink" href="#sciforge.matkit.carrier_pinn.physics.PoissonCoupledPhysics.q" title="Link to this definition"></a></dt>
+<dd><p>Elementary electron charge constant in Coulombs (1.602e-19 C).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
 </dd>
 </dl>
-</div></blockquote>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sciforge.matkit.carrier_pinn.physics.PoissonCoupledPhysics.kb_t">
+<span class="sig-name descname"><span class="pre">kb_t</span></span><a class="headerlink" href="#sciforge.matkit.carrier_pinn.physics.PoissonCoupledPhysics.kb_t" title="Link to this definition"></a></dt>
+<dd><p>Thermal energy constant at 300K in Joules.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sciforge.matkit.carrier_pinn.physics.PoissonCoupledPhysics.eps0">
+<span class="sig-name descname"><span class="pre">eps0</span></span><a class="headerlink" href="#sciforge.matkit.carrier_pinn.physics.PoissonCoupledPhysics.eps0" title="Link to this definition"></a></dt>
+<dd><p>Vacuum permittivity constant in Farads per meter (8.854e-12 F/m).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sciforge.matkit.carrier_pinn.physics.PoissonCoupledPhysics.eps_r">
+<span class="sig-name descname"><span class="pre">eps_r</span></span><a class="headerlink" href="#sciforge.matkit.carrier_pinn.physics.PoissonCoupledPhysics.eps_r" title="Link to this definition"></a></dt>
+<dd><p>Relative material static dielectric constant.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sciforge.matkit.carrier_pinn.physics.PoissonCoupledPhysics.nd">
+<span class="sig-name descname"><span class="pre">nd</span></span><a class="headerlink" href="#sciforge.matkit.carrier_pinn.physics.PoissonCoupledPhysics.nd" title="Link to this definition"></a></dt>
+<dd><p>Uniform background n-type donor doping concentration in <span class="math notranslate nohighlight">\(\text{m}^{-3}\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sciforge.matkit.carrier_pinn.physics.PoissonCoupledPhysics.mobility">
+<span class="sig-name descname"><span class="pre">mobility</span></span><a class="headerlink" href="#sciforge.matkit.carrier_pinn.physics.PoissonCoupledPhysics.mobility" title="Link to this definition"></a></dt>
+<dd><p>Electron mobility in <span class="math notranslate nohighlight">\(\text{m}^2/(\text{V}\cdot\text{s})\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sciforge.matkit.carrier_pinn.physics.PoissonCoupledPhysics.diffusion_coeff">
+<span class="sig-name descname"><span class="pre">diffusion_coeff</span></span><a class="headerlink" href="#sciforge.matkit.carrier_pinn.physics.PoissonCoupledPhysics.diffusion_coeff" title="Link to this definition"></a></dt>
+<dd><p>Diffusion coefficient in <span class="math notranslate nohighlight">\(\text{m}^2/\text{s}\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="sciforge.matkit.carrier_pinn.physics.PoissonCoupledPhysics.compute_residuals">
 <span class="sig-name descname"><span class="pre">compute_residuals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_scaled</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Module</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/sciforge/matkit/carrier_pinn/physics.html#PoissonCoupledPhysics.compute_residuals"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sciforge.matkit.carrier_pinn.physics.PoissonCoupledPhysics.compute_residuals" title="Link to this definition"></a></dt>
