@@ -245,15 +245,18 @@ def run_live_simulation_callback(
             text=f"Live Solver Outputs: {formula} ({engine_mode.upper()} Mode)",
             font=dict(size=16),
         ),
-        xaxis=dict(title=r"Normalised Spatial Coordinate, $x/L$", gridcolor="#eee"),
+        xaxis=dict(
+            title=dict(text=r"Normalised Spatial Coordinate ($x/L$)"), gridcolor="#eee"
+        ),
         yaxis=dict(
-            title=r"Normalised Carrier Density, $n/N_0$",
+            title=dict(
+                text=r"Normalised Carrier Density ($n/N_0$)", font=dict(color="#1f77b4")
+            ),
             gridcolor="#eee",
-            titlefont=dict(color="#1f77b4"),
             tickfont=dict(color="#1f77b4"),
         ),
         template="plotly_white",
-        legend=dict(x=0.02, y=0.98, bordercolor="none"),
+        legend=dict(x=0.02, y=0.98, bordercolor="#ffffff"),
         margin=dict(l=40, r=40, t=50, b=40),
     )
 
@@ -262,15 +265,17 @@ def run_live_simulation_callback(
             go.Scatter(
                 x=np_x,
                 y=preds[:, 1],
-                name=r"Electrostatic Potential, $\phi$",
+                name=r"Electrostatic Potentialm $\phi$",
                 yaxis="y2",
                 line=dict(color="#d62728", width=2.5, dash="dash"),
             )
         )
         fig.update_layout(
             yaxis2=dict(
-                title=r"Electrostatic Potential, $\phi$ (V))",
-                titlefont=dict(color="#d62728"),
+                title=dict(
+                    text=r"Electrostatic Potential, $\phi$ (V)",
+                    font=dict(color="#d62728"),
+                ),
                 tickfont=dict(color="#d62728"),
                 anchor="x",
                 overlaying="y",
