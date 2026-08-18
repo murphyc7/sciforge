@@ -32,7 +32,7 @@ class MockMaterialsProjectClient(BaseMaterialClient):
     """
 
     def __init__(self, api_key: str) -> None:
-        """Initializes the mock discovery interface.
+        """Initialises the mock discovery interface.
 
         Args:
             api_key (str): Synthetic developer token string used to mimic web connection steps.

@@ -101,6 +101,26 @@ pytest test/
 
 ---
 
+## Full-Stack Interactive Physics Portal
+
+To bridge backend computational engineering with cross-functional hardware teams, the platform provides an interactive web application interface built on **Plotly Dash** and **Flask**.
+
+### 1. Architectural Interface Layers
+* **Reactive Database Binding**: Dynamically queries your local PostgreSQL instance to populate application dropdown components with live material baseline properties.
+* **Synchronized Pipeline Workers**: Adjusting sliders and parameters fires unified background callback loops that directly initialize PyTorch Multi-Layer Perceptrons and select the desired `BasePhysicsSolver` strategy.
+* **Client-Side Canvas Vector Engine**: Translates tensor outputs directly into interactive HTML5 multi-axis figures using high-performance **Plotly Graph Objects**.
+
+### 2. Operational Launcher
+To launch the interactive dashboard server locally:
+```bash
+export DATABASE_URL="postgresql://postgres_user:secure_pass@localhost:5432/sciforge_db"
+export PYTHONPATH="src"
+python apps/run_physics_dashboard.py
+```
+Open your web browser and navigate to: `http://localhost:8050`
+
+---
+
 ## MLOps Tracking Ledger & Model Registry
 
 To ensure strict scientific reproducibility across compute cycles, the platform decouples training runs from unversioned local checkpoints by executing a fully automated **Model Tracking Registry**.
