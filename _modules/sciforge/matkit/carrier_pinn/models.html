@@ -66,11 +66,11 @@
            <div itemprop="articleBody">
              
   <h1>Source code for sciforge.matkit.carrier_pinn.models</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Multi-Layer Perceptron architectures optimised for differential calculus solvers.</span>
+<span></span><span class="sd">"""Multi-Layer Perceptron architectures optimised for differential calculus solvers.</span>
 
 <span class="sd">Defines smooth multilayer network profiles designed to support uninterrupted backpropagation</span>
 <span class="sd">operations without suffering from vanishing numerical gradients.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
@@ -79,11 +79,11 @@
 <div class="viewcode-block" id="CarrierPINN">
 <a class="viewcode-back" href="../../../../index.html#sciforge.matkit.carrier_pinn.models.CarrierPINN">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CarrierPINN</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A deep network layer architecture for modeling charge carrier spatial distributions.</span>
+<span class="w">    </span><span class="sd">"""A deep network layer architecture for modeling charge carrier spatial distributions.</span>
 
 <span class="sd">    Implements a fully connected Multi-Layer Perceptron (MLP) configuration using Hyperbolic</span>
 <span class="sd">    Tangent (Tanh) activation functions to calculate stable higher-order derivatives.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -92,7 +92,7 @@
         <span class="n">hidden_layers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
         <span class="n">hidden_dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initializes the network layer architecture.</span>
+<span class="w">        </span><span class="sd">"""Initializes the network layer architecture.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            input_dim (int, optional): Coordinate parameter input counts. Defaults to 1.</span>
@@ -100,7 +100,7 @@
 <span class="sd">                use 2 for coupled Poisson-Drift-Diffusion solvers. Defaults to 1.</span>
 <span class="sd">            hidden_layers (int, optional): Total processing layer depths. Defaults to 4.</span>
 <span class="sd">            hidden_dim (int, optional): Processing channels per layer. Defaults to 50.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
 
         <span class="n">layers</span> <span class="o">=</span> <span class="p">[]</span>
@@ -113,7 +113,7 @@
             <span class="n">layers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_dim</span><span class="p">,</span> <span class="n">hidden_dim</span><span class="p">))</span>
             <span class="n">layers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Tanh</span><span class="p">())</span>
 
-        <span class="c1"># Output layer (Predicting carrier concentration &#39;n&#39;)</span>
+        <span class="c1"># Output layer (Predicting carrier concentration 'n')</span>
         <span class="n">layers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_dim</span><span class="p">,</span> <span class="n">output_dim</span><span class="p">))</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">network</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span><span class="o">*</span><span class="n">layers</span><span class="p">)</span>
@@ -121,14 +121,14 @@
 <div class="viewcode-block" id="CarrierPINN.forward">
 <a class="viewcode-back" href="../../../../index.html#sciforge.matkit.carrier_pinn.models.CarrierPINN.forward">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Evaluates carrier concentration predictions at targeted spatial grids.</span>
+<span class="w">        </span><span class="sd">"""Evaluates carrier concentration predictions at targeted spatial grids.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            x (torch.Tensor): Coordinates tensor grid of shape [Batch Size, 1].</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            torch.Tensor: The corresponding predicted carrier concentrations.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">network</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></div>
 </div>
 
