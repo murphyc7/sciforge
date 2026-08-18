@@ -24,8 +24,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Initialise Dash App with crisp, clean default typography styling
-app = Dash(__name__, title="SciForge Physics Portal")
+# Initialise Dash App
+app = Dash(
+    __name__,
+    title="SciForge Physics Portal",
+)
 
 # Establish data architecture client
 db_client = DatabaseClient()
@@ -152,7 +155,8 @@ app.layout = html.Div(
                             id="loading-panel",
                             type="circle",
                             children=dcc.Graph(
-                                id="simulation-graph", style={"height": "500px"}
+                                id="simulation-graph",
+                                style={"height": "500px"},
                             ),
                         )
                     ],
@@ -235,7 +239,7 @@ def run_live_simulation_callback(
         go.Scatter(
             x=np_x,
             y=preds[:, 0],
-            name=r"Simulated Carrier Density ($n/N_0$)",
+            name=r"Simulated Carrier Density (n/N₀)",
             line=dict(color="#1f77b4", width=2.5),
         )
     )
@@ -246,11 +250,11 @@ def run_live_simulation_callback(
             font=dict(size=16),
         ),
         xaxis=dict(
-            title=dict(text=r"Normalised Spatial Coordinate ($x/L$)"), gridcolor="#eee"
+            title=dict(text=r"Normalised Spatial Coordinate (x/L)"), gridcolor="#eee"
         ),
         yaxis=dict(
             title=dict(
-                text=r"Normalised Carrier Density ($n/N_0$)", font=dict(color="#1f77b4")
+                text=r"Normalised Carrier Density (n/N₀)", font=dict(color="#1f77b4")
             ),
             gridcolor="#eee",
             tickfont=dict(color="#1f77b4"),
@@ -265,7 +269,7 @@ def run_live_simulation_callback(
             go.Scatter(
                 x=np_x,
                 y=preds[:, 1],
-                name=r"Electrostatic Potentialm $\phi$",
+                name=r"Electrostatic Potential, ϕ",
                 yaxis="y2",
                 line=dict(color="#d62728", width=2.5, dash="dash"),
             )
@@ -273,7 +277,7 @@ def run_live_simulation_callback(
         fig.update_layout(
             yaxis2=dict(
                 title=dict(
-                    text=r"Electrostatic Potential, $\phi$ (V)",
+                    text=r"Electrostatic Potential, ϕ (V)",
                     font=dict(color="#d62728"),
                 ),
                 tickfont=dict(color="#d62728"),
