@@ -251,3 +251,181 @@ class PoissonCoupledPhysics(BasePhysicsSolver):
         transport_residual = diffusion_term + drift_term
 
         return {"poisson": poisson_residual, "transport": transport_residual}
+
+
+class BipolarCoupledPhysics(BasePhysicsSolver):
+    r"""Numerically stable, self-consistent coupled Poisson, Electron, and Hole Continuity solver.
+
+    Enforces total space-charge electrostatic balance and non-equilibrium current
+    conservation simultaneously. This strategy uses automated differentiation graphs
+    to evaluate three tightly coupled non-linear partial differential equations:
+
+    .. math::
+
+       \mathcal{R}_{\text{poisson}}(x) = \frac{d^2\phi}{dx^2} + \frac{q}{\epsilon_0 \epsilon_r}
+       \left( N_D^+ - N_A^- + p(x) - n(x) \right) = 0
+
+    .. math::
+
+       \mathcal{R}_{\text{electron}}(x) = D_n \frac{d^2n}{dx^2} - \mu_n \frac{d\phi}{dx}\frac{dn}{dx}
+       - \mu_n \frac{d^2\phi}{dx^2}n(x) - U_{\text{SRH}}(x) = 0
+
+    .. math::
+
+       \mathcal{R}_{\text{hole}}(x) = D_p \frac{d^2p}{dx^2} + \mu_p \frac{d\phi}{dx}\frac{dp}{dx}
+       + \mu_p \frac{d^2\phi}{dx^2}p(x) - U_{\text{SRH}}(x) = 0
+
+    Where generation-recombination currents are driven via a non-linear Shockley-Read-Hall
+    (SRH) trap-assisted recombination profile:
+
+    .. math::
+
+       U_{\text{SRH}}(x) = \frac{n(x)p(x) - n_i^2}{\tau_p (n(x) + n_i) + \tau_n (p(x) + n_i)}
+    """
+
+    def __init__(
+        self, effective_mass: float, permittivity: float, donor_doping: float = 1.0e22
+    ) -> None:
+        """Initialises the self-consistent bipolar Poisson-recombination physics engine.
+
+        Args:
+            effective_mass (float): Material effective mass relative to electron mass (:math:`m_e`).
+            permittivity (float): Relative static material macroscopic dielectric constant.
+            donor_doping (float, optional): Background uniform ionized donor concentration in
+                :math:`\text{m}^{-3}`. Defaults to 1.0e22.
+        """
+        self.L_scale = 1.0e-6
+        self.N_scale = 1.0e22
+        self.q = 1.602e-19
+        self.kb_t = 0.0259 * self.q
+        self.eps0 = 8.854e-12
+        self.eps_r = permittivity
+
+        # Mobility and Diffusion parameters for both carriers
+        self.mu_n = 0.14 / (effective_mass + 1e-8)
+        self.mu_p = (
+            self.mu_n / 3.0
+        )  # Physical hole mobility is roughly 1/3 of electron mobility
+        self.dn = self.mu_n * (self.kb_t / self.q)
+        self.dp = self.mu_p * (self.kb_t / self.q)
+
+        # Recombination thresholds
+        self.tau_n = 1.0e-6  # Electron lifetime (s)
+        self.tau_p = 1.0e-6  # Hole lifetime (s)
+        self.ni = 1.5e16  # Intrinsic carrier density (m^-3)
+        self.nd_scaled = donor_doping / self.N_scale
+
+    def compute_residuals(
+        self, x_scaled: torch.Tensor, model: torch.nn.Module
+    ) -> dict[str, torch.Tensor]:
+        """Calculates independent residuals for Poisson, Electron, and Hole current loops.
+
+        Extracts three distinct multi-variable channels from the target network node outputs,
+        maps physical spatial coordinates using the chain rule, and aggregates
+        non-linear current recombination losses safely into the computational graph.
+
+        Args:
+            x_scaled (torch.Tensor): Bounded spatial coordinate tracking grid of shape `[Batch Size, 1]`.
+            model (nn.Module): Neural network tracking multi-variable outputs where:
+                - Channel 0 maps to electron concentration: :math:`n(x)`.
+                - Channel 1 maps to hole concentration: :math:`p(x)`.
+                - Channel 2 maps to local electrostatic potential: :math:`\phi(x)`.
+
+        Returns:
+            dict[str, torch.Tensor]: Dictionary containing three physical validation keys:
+                - "poisson": Bipolar space-charge electrostatic residual matrix of shape `[Batch Size, 1]`.
+                - "electron": Electron continuity conservation residual matrix of shape `[Batch Size, 1]`.
+                - "hole": Hole continuity conservation residual matrix of shape `[Batch Size, 1]`.
+        """
+        x_scaled.requires_grad_(True)
+        predictions = model(x_scaled)
+
+        # Slice output matrix nodes to map three distinct fields simultaneously
+        n_scaled = predictions[:, 0:1]
+        p_scaled = predictions[:, 1:2]
+        phi = predictions[:, 2:3]
+
+        # First derivatives
+        dn_dx = torch.autograd.grad(
+            n_scaled,
+            x_scaled,
+            torch.ones_like(n_scaled),
+            create_graph=True,
+            retain_graph=True,
+        )
+        dp_dx = torch.autograd.grad(
+            p_scaled,
+            x_scaled,
+            torch.ones_like(p_scaled),
+            create_graph=True,
+            retain_graph=True,
+        )
+        dphi_dx = torch.autograd.grad(
+            phi, x_scaled, torch.ones_like(phi), create_graph=True, retain_graph=True
+        )
+
+        # Second derivatives
+        d2n_dx2 = torch.autograd.grad(
+            dn_dx,
+            x_scaled,
+            torch.ones_like(dn_dx),
+            create_graph=True,
+            retain_graph=True,
+        )
+        d2dp_dx2 = torch.autograd.grad(
+            dp_dx,
+            x_scaled,
+            torch.ones_like(dp_dx),
+            create_graph=True,
+            retain_graph=True,
+        )
+        d2phi_dx2 = torch.autograd.grad(
+            dphi_dx,
+            x_scaled,
+            torch.ones_like(dphi_dx),
+            create_graph=True,
+            retain_graph=True,
+        )
+
+        # Restore physical dimensions for calculus evaluation loops
+        dn_dx_phys = dn_dx / self.L_scale
+        dp_dx_phys = dp_dx / self.L_scale
+        dphi_dx_phys = dphi_dx / self.L_scale
+        d2n_dx2_phys = d2n_dx2 / (self.L_scale**2)
+        d2dp_dx2_phys = d2dp_dx2 / (self.L_scale**2)
+        d2phi_dx2_phys = d2phi_dx2 / (self.L_scale**2)
+
+        n_phys = n_scaled * self.N_scale
+        p_phys = p_scaled * self.N_scale
+
+        # Non-linear SRH Recombination Calculation
+        u_srh = (n_phys * p_phys - self.ni**2) / (
+            self.tau_p * (n_phys + self.ni) + self.tau_n * (p_phys + self.ni)
+        )
+
+        # 1. Bipolar Poisson Residual
+        poisson_constant = self.q / (self.eps0 * self.eps_r)
+        poisson_residual = (
+            d2phi_dx2_phys
+            + poisson_constant * (self.nd_scaled * self.N_scale - n_phys + p_phys)
+        ) * 1.0e-3
+
+        # 2. Electron Continuity Residual
+        electron_residual = (
+            self.dn * d2n_dx2_phys
+            - self.mu_n * (dphi_dx_phys * dn_dx_phys + d2phi_dx2_phys * n_phys)
+            - u_srh
+        )
+
+        # 3. Hole Continuity Residual
+        hole_residual = (
+            self.dp * d2dp_dx2_phys
+            + self.mu_p * (dphi_dx_phys * dp_dx_phys + d2phi_dx2_phys * p_phys)
+            - u_srh
+        )
+
+        return {
+            "poisson": poisson_residual,
+            "electron": electron_residual,
+            "hole": hole_residual,
+        }
