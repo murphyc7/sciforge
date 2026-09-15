@@ -9,6 +9,7 @@ import torch.nn as nn
 
 from sciforge.matkit.carrier_pinn.models import CarrierPINN
 from sciforge.matkit.carrier_pinn.physics import (
+    BipolarCoupledPhysics,
     ConstantFieldPhysics,
     PoissonCoupledPhysics,
 )
@@ -65,11 +66,17 @@ def main() -> None:
         physics_engine = ConstantFieldPhysics(effective_mass=m_eff, permittivity=eps)
         n_boundary_left = torch.tensor([[1.0]], dtype=torch.float32)
         n_boundary_right = torch.tensor([[0.0]], dtype=torch.float32)
-    else:
+    elif args.engine == "coupled":
         model = CarrierPINN(output_dim=2)
         physics_engine = PoissonCoupledPhysics(effective_mass=m_eff, permittivity=eps)
         n_boundary_left = torch.tensor([[1.0, 0.0]], dtype=torch.float32)
         n_boundary_right = torch.tensor([[0.1, 0.5]], dtype=torch.float32)
+    else:
+        model = CarrierPINN(output_dim=3)
+        physics_engine = BipolarCoupledPhysics(effective_mass=m_eff, permittivity=eps)
+        # Left boundary boundary conditions: [n_scaled, p_scaled, phi_scaled]
+        n_boundary_left = torch.tensor([[1.0, 0.01, 0.0]], dtype=torch.float32)
+        n_boundary_right = torch.tensor([[0.1, 1.0, 0.8]], dtype=torch.float32)
 
     optimiser = torch.optim.Adam(model.parameters(), lr=1e-3)
     mse_criterion = nn.MSELoss()
