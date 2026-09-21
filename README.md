@@ -53,6 +53,16 @@ $$\mathcal{R}_{\text{transport}}(x) = D_n \frac{d^2n}{dx^2} + \mu_n \left(-\frac
 
 ![Coupled Self-Consistent Run](example_visualisations/simulation_coupled.png)
 
+### 3. Bipolar Coupled Recombination Engine (`--engine bipolar`)
+Simulates full non-equilibrium electron ($n$) and hole ($p$) dynamics coupled with space-charge electrostatics and non-linear **Shockley-Read-Hall (SRH) generation-recombination**:
+
+$$\mathcal{R}_{\text{poisson}}(x) = \frac{d^2\phi}{dx^2} + \frac{q}{\epsilon_0 \epsilon_r} \left( N_D^+ - N_A^- + p(x) - n(x) \right) = 0$$
+
+$$\mathcal{R}_{\text{electron}}(x) = D_n \frac{d^2n}{dx^2} - \mu_n \frac{d\phi}{dx}\frac{dn}{dx} - \mu_n \frac{d^2\phi}{dx^2}n(x) - U_{\text{SRH}}(x) = 0$$
+
+$$\mathcal{R}_{\text{hole}}(x) = D_p \frac{d^2p}{dx^2} + \mu_p \frac{d\phi}{dx}\frac{dp}{dx} + \mu_p \frac{d^2\phi}{dx^2}p(x) - U_{\text{SRH}}(x) = 0$$
+
+
 Where:
 * **Mobility Scaling**: Material mobility scales dynamically based on physical constraints fetched from your database: $\mu_n = \frac{0.14}{m^*}$.
 * **Einstein Relation**: The diffusion coefficient is directly linked to the computed mobility via: $D_n = \mu_n \frac{k_B T}{q}$.

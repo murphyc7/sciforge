@@ -22,6 +22,7 @@ class DualAxisTransportPlotter(BasePlotter):
             **kwargs: Expected data structures containing:
                 - 'x' (np.ndarray): Spatial coordinates vector grid.
                 - 'n' (np.ndarray): Calculated carrier density dataset matrix.
+                - 'p' (np.ndarray, optional): Calculated hole density dataset matrix.
                 - 'phi' (np.ndarray, optional): Local electrostatic potential array.
                 - 'title' (str, optional): Main figure title parameter text.
                 - 'x_exp' (np.ndarray, optional): Experimental spatial coordinate markers.
@@ -38,6 +39,7 @@ class DualAxisTransportPlotter(BasePlotter):
 
         x = kwargs["x"].flatten()
         n = kwargs["n"].flatten()
+        p = kwargs.get("p")
         phi = kwargs.get("phi")
         title_text = kwargs.get("title")
 
@@ -67,6 +69,19 @@ class DualAxisTransportPlotter(BasePlotter):
         ax1.tick_params(axis="y", labelcolor=color_n)
 
         lines = line1
+
+        # Optional overlay: hole concentration (bipolar engine path)
+        if p is not None:
+            color_p = "#9467bd"  # High-contrast scientific purple for holes
+            line_p = ax1.plot(
+                x,
+                p.flatten(),
+                color=color_p,
+                linestyle="-.",
+                linewidth=1.5,
+                label="Holes ($p$)",
+            )
+            lines = lines + line_p
 
         # Optional overlay: Experimental Scattered Data Track
         if x_exp is not None and n_exp is not None:
