@@ -14,6 +14,7 @@ from dash import Dash, Input, Output, State, callback, dcc, html
 
 from sciforge.matkit.carrier_pinn.models import CarrierPINN
 from sciforge.matkit.carrier_pinn.physics import (
+    BipolarCoupledPhysics,
     ConstantFieldPhysics,
     PoissonCoupledPhysics,
 )
@@ -111,6 +112,10 @@ app.layout = html.Div(
                                     "label": " Self-Consistent Coupled Poisson",
                                     "value": "coupled",
                                 },
+                                {
+                                    "label": " Bipolar Coupled Recombination",
+                                    "value": "bipolar",
+                                },
                             ],
                             value="constant",
                             style={"margin": "10px 0 20px 0"},
@@ -198,11 +203,17 @@ def run_live_simulation_callback(
         physics_engine = ConstantFieldPhysics(effective_mass=m_eff, permittivity=eps)
         n_left = torch.tensor([[1.0]], dtype=torch.float32)
         n_right = torch.tensor([[0.0]], dtype=torch.float32)
-    else:
+    elif engine_mode == "coupled":
         model = CarrierPINN(output_dim=2)
         physics_engine = PoissonCoupledPhysics(effective_mass=m_eff, permittivity=eps)
         n_left = torch.tensor([[1.0, 0.0]], dtype=torch.float32)
         n_right = torch.tensor([[0.1, 0.5]], dtype=torch.float32)
+    else:
+        model = CarrierPINN(output_dim=3)
+        physics_engine = BipolarCoupledPhysics(effective_mass=m_eff, permittivity=eps)
+        # Sets boundary layers mapping [n, p, phi] for the bipolar system mesh
+        n_left = torch.tensor([[1.0, 0.01, 0.0]], dtype=torch.float32)
+        n_right = torch.tensor([[0.1, 1.0, 0.8]], dtype=torch.float32)
 
     optimiser = torch.optim.Adam(model.parameters(), lr=1e-3)
     mse = nn.MSELoss()
@@ -243,6 +254,46 @@ def run_live_simulation_callback(
             line=dict(color="#1f77b4", width=2.5),
         )
     )
+
+    # Dynamic bipolar trace allocation path
+    if engine_mode == "bipolar":
+        # Extract hole density from channel 1 and map it to the primary Y-axis
+        fig.add_trace(
+            go.Scatter(
+                x=np_x,
+                y=preds[:, 1],
+                name="Simulated Holes ($p/N_0$)",
+                line=dict(color="#9467bd", width=2.5, dash="dashdot"),
+            )
+        )
+        # Potential maps to channel 2 in bipolar mode
+        phi_data = preds[:, 2]
+    else:
+        # Potential maps to channel 1 in traditional unipolar coupled mode
+        phi_data = preds[:, 1] if engine_mode == "coupled" else None
+
+    if phi_data is not None:
+        fig.add_trace(
+            go.Scatter(
+                x=np_x,
+                y=phi_data,
+                name=r"Electrostatic Potential, ϕ",
+                yaxis="y2",
+                line=dict(color="#d62728", width=2.5, dash="dash"),
+            )
+        )
+        fig.update_layout(
+            yaxis2=dict(
+                title=dict(
+                    text=r"Electrostatic Potential, ϕ (V)",
+                    font=dict(color="#d62728"),
+                ),
+                tickfont=dict(color="#d62728"),
+                anchor="x",
+                overlaying="y",
+                side="right",
+            )
+        )
 
     fig.update_layout(
         title=dict(

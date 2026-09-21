@@ -84,3 +84,28 @@ def test_plotter_raises_key_error_when_mandatory_arrays_are_omitted(tmp_path) ->
         plotter.render(
             save_path=output_file, x=np.array([1, 2, 3])
         )  # Missing the 'n' density tracking target
+
+
+def test_dual_axis_plotter_renders_bipolar_multi_field_profiles(tmp_path) -> None:
+    """Confirms that the plotting component overlays hole metrics alongside electrons cleanly."""
+    output_file = os.path.join(tmp_path, "test_bipolar.png")
+
+    np_x = np.linspace(0.0, 1.0, 30)
+    np_n = np.exp(-np_x)
+    np_p = 1.0 - np.exp(-np_x)  # Complementary hole injection profile shape
+    np_phi = np_x * 0.8
+
+    plotter = DualAxisTransportPlotter()
+
+    # Act: Run rendering with bipolar parameters active
+    plotter.render(
+        save_path=output_file,
+        x=np_x,
+        n=np_n,
+        p=np_p,
+        phi=np_phi,
+        title="Test Bipolar System Profile",
+    )
+
+    assert os.path.exists(output_file)
+    assert os.path.getsize(output_file) > 0
