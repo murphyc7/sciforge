@@ -4,6 +4,7 @@ import torch
 
 from sciforge.matkit.carrier_pinn.models import CarrierPINN
 from sciforge.matkit.carrier_pinn.physics import (
+    BipolarCoupledPhysics,
     ConstantFieldPhysics,
     PoissonCoupledPhysics,
 )
@@ -86,3 +87,28 @@ def test_poisson_coupled_physics_evaluates_multi_field_residuals() -> None:
 
     assert residuals["poisson"].requires_grad is True
     assert residuals["transport"].requires_grad is True
+
+
+def test_bipolar_coupled_physics_evaluates_three_distinct_residuals() -> None:
+    """Confirms BipolarCoupledPhysics maps three output channels and returns true grad histories."""
+    # Arrange: Setup network width for 3 output nodes [n, p, phi]
+    model = CarrierPINN(input_dim=1, output_dim=3, hidden_dim=12)
+    solver = BipolarCoupledPhysics(effective_mass=0.067, permittivity=12.9)
+
+    x_grid = torch.linspace(0.0, 1.0e-6, 10, dtype=torch.float32).view(-1, 1)
+
+    # Act: Compute multi-field bipolar equations
+    residuals = solver.compute_residuals(x_grid, model)
+
+    # Assert: Confirm all three coupled keys evaluate tracking arrays perfectly
+    assert "poisson" in residuals
+    assert "electron" in residuals
+    assert "hole" in residuals
+
+    assert residuals["poisson"].shape == (10, 1)
+    assert residuals["electron"].shape == (10, 1)
+    assert residuals["hole"].shape == (10, 1)
+
+    assert residuals["poisson"].requires_grad is True
+    assert residuals["electron"].requires_grad is True
+    assert residuals["hole"].requires_grad is True

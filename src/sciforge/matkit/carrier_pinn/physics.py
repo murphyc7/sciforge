@@ -352,17 +352,17 @@ class BipolarCoupledPhysics(BasePhysicsSolver):
             torch.ones_like(n_scaled),
             create_graph=True,
             retain_graph=True,
-        )
+        )[0]
         dp_dx = torch.autograd.grad(
             p_scaled,
             x_scaled,
             torch.ones_like(p_scaled),
             create_graph=True,
             retain_graph=True,
-        )
+        )[0]
         dphi_dx = torch.autograd.grad(
             phi, x_scaled, torch.ones_like(phi), create_graph=True, retain_graph=True
-        )
+        )[0]
 
         # Second derivatives
         d2n_dx2 = torch.autograd.grad(
@@ -371,21 +371,21 @@ class BipolarCoupledPhysics(BasePhysicsSolver):
             torch.ones_like(dn_dx),
             create_graph=True,
             retain_graph=True,
-        )
+        )[0]
         d2dp_dx2 = torch.autograd.grad(
             dp_dx,
             x_scaled,
             torch.ones_like(dp_dx),
             create_graph=True,
             retain_graph=True,
-        )
+        )[0]
         d2phi_dx2 = torch.autograd.grad(
             dphi_dx,
             x_scaled,
             torch.ones_like(dphi_dx),
             create_graph=True,
             retain_graph=True,
-        )
+        )[0]
 
         # Restore physical dimensions for calculus evaluation loops
         dn_dx_phys = dn_dx / self.L_scale
