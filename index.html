@@ -109,6 +109,10 @@
 <li><a class="reference internal" href="#sciforge.matkit.carrier_pinn.physics.BasePhysicsSolver.compute_residuals"><code class="docutils literal notranslate"><span class="pre">BasePhysicsSolver.compute_residuals()</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#sciforge.matkit.carrier_pinn.physics.BipolarCoupledPhysics"><code class="docutils literal notranslate"><span class="pre">BipolarCoupledPhysics</span></code></a><ul>
+<li><a class="reference internal" href="#sciforge.matkit.carrier_pinn.physics.BipolarCoupledPhysics.compute_residuals"><code class="docutils literal notranslate"><span class="pre">BipolarCoupledPhysics.compute_residuals()</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#sciforge.matkit.carrier_pinn.physics.ConstantFieldPhysics"><code class="docutils literal notranslate"><span class="pre">ConstantFieldPhysics</span></code></a><ul>
 <li><a class="reference internal" href="#sciforge.matkit.carrier_pinn.physics.ConstantFieldPhysics.q"><code class="docutils literal notranslate"><span class="pre">ConstantFieldPhysics.q</span></code></a></li>
 <li><a class="reference internal" href="#sciforge.matkit.carrier_pinn.physics.ConstantFieldPhysics.kb_t"><code class="docutils literal notranslate"><span class="pre">ConstantFieldPhysics.kb_t</span></code></a></li>
@@ -609,6 +613,63 @@ Tangent (Tanh) activation functions to calculate stable higher-order derivatives
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><dl class="simple">
 <dt>Map of string identifiers to calculated residual loss</dt><dd><p>tensors (e.g., {“transport”: tensor}). Each tensor matches the shape of <cite>x</cite>.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict[str, torch.Tensor]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sciforge.matkit.carrier_pinn.physics.BipolarCoupledPhysics">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sciforge.matkit.carrier_pinn.physics.</span></span><span class="sig-name descname"><span class="pre">BipolarCoupledPhysics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">effective_mass</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permittivity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">donor_doping</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1e+22</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sciforge/matkit/carrier_pinn/physics.html#BipolarCoupledPhysics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sciforge.matkit.carrier_pinn.physics.BipolarCoupledPhysics" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#sciforge.matkit.carrier_pinn.physics.BasePhysicsSolver" title="sciforge.matkit.carrier_pinn.physics.BasePhysicsSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasePhysicsSolver</span></code></a></p>
+<p>Numerically stable, self-consistent coupled Poisson, Electron, and Hole Continuity solver.</p>
+<p>Enforces total space-charge electrostatic balance and non-equilibrium current
+conservation simultaneously. This strategy uses automated differentiation graphs
+to evaluate three tightly coupled non-linear partial differential equations:</p>
+<div class="math notranslate nohighlight">
+\[\mathcal{R}_{\text{poisson}}(x) = \frac{d^2\phi}{dx^2} + \frac{q}{\epsilon_0 \epsilon_r}
+\left( N_D^+ - N_A^- + p(x) - n(x) \right) = 0\]</div>
+<div class="math notranslate nohighlight">
+\[\mathcal{R}_{\text{electron}}(x) = D_n \frac{d^2n}{dx^2} - \mu_n \frac{d\phi}{dx}\frac{dn}{dx}
+- \mu_n \frac{d^2\phi}{dx^2}n(x) - U_{\text{SRH}}(x) = 0\]</div>
+<div class="math notranslate nohighlight">
+\[\mathcal{R}_{\text{hole}}(x) = D_p \frac{d^2p}{dx^2} + \mu_p \frac{d\phi}{dx}\frac{dp}{dx}
++ \mu_p \frac{d^2\phi}{dx^2}p(x) - U_{\text{SRH}}(x) = 0\]</div>
+<p>Where generation-recombination currents are driven via a non-linear Shockley-Read-Hall
+(SRH) trap-assisted recombination profile:</p>
+<div class="math notranslate nohighlight">
+\[U_{\text{SRH}}(x) = \frac{n(x)p(x) - n_i^2}{\tau_p (n(x) + n_i) + \tau_n (p(x) + n_i)}\]</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="sciforge.matkit.carrier_pinn.physics.BipolarCoupledPhysics.compute_residuals">
+<span class="sig-name descname"><span class="pre">compute_residuals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_scaled</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Module</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/sciforge/matkit/carrier_pinn/physics.html#BipolarCoupledPhysics.compute_residuals"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sciforge.matkit.carrier_pinn.physics.BipolarCoupledPhysics.compute_residuals" title="Link to this definition"></a></dt>
+<dd><p>Calculates independent residuals for Poisson, Electron, and Hole current loops.</p>
+<p>Extracts three distinct multi-variable channels from the target network node outputs,
+maps physical spatial coordinates using the chain rule, and aggregates
+non-linear current recombination losses safely into the computational graph.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x_scaled</strong> (<em>torch.Tensor</em>) – Bounded spatial coordinate tracking grid of shape <cite>[Batch Size, 1]</cite>.</p></li>
+<li><p><strong>model</strong> (<em>nn.Module</em>) – Neural network tracking multi-variable outputs where:
+- Channel 0 maps to electron concentration: <span class="math notranslate nohighlight">\(n(x)\)</span>.
+- Channel 1 maps to hole concentration: <span class="math notranslate nohighlight">\(p(x)\)</span>.
+- Channel 2 maps to local electrostatic potential: <span class="math notranslate nohighlight">\(\phi(x)\)</span>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>Dictionary containing three physical validation keys:</dt><dd><ul class="simple">
+<li><p>”poisson”: Bipolar space-charge electrostatic residual matrix of shape <cite>[Batch Size, 1]</cite>.</p></li>
+<li><p>”electron”: Electron continuity conservation residual matrix of shape <cite>[Batch Size, 1]</cite>.</p></li>
+<li><p>”hole”: Hole continuity conservation residual matrix of shape <cite>[Batch Size, 1]</cite>.</p></li>
+</ul>
 </dd>
 </dl>
 </p>

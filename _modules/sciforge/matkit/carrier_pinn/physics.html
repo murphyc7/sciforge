@@ -337,6 +337,201 @@
         <span class="k">return</span> <span class="p">{</span><span class="s2">"poisson"</span><span class="p">:</span> <span class="n">poisson_residual</span><span class="p">,</span> <span class="s2">"transport"</span><span class="p">:</span> <span class="n">transport_residual</span><span class="p">}</span></div>
 </div>
 
+
+
+<div class="viewcode-block" id="BipolarCoupledPhysics">
+<a class="viewcode-back" href="../../../../index.html#sciforge.matkit.carrier_pinn.physics.BipolarCoupledPhysics">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BipolarCoupledPhysics</span><span class="p">(</span><span class="n">BasePhysicsSolver</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Numerically stable, self-consistent coupled Poisson, Electron, and Hole Continuity solver.</span>
+
+<span class="sd">    Enforces total space-charge electrostatic balance and non-equilibrium current</span>
+<span class="sd">    conservation simultaneously. This strategy uses automated differentiation graphs</span>
+<span class="sd">    to evaluate three tightly coupled non-linear partial differential equations:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">       \mathcal{R}_{\text{poisson}}(x) = \frac{d^2\phi}{dx^2} + \frac{q}{\epsilon_0 \epsilon_r}</span>
+<span class="sd">       \left( N_D^+ - N_A^- + p(x) - n(x) \right) = 0</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">       \mathcal{R}_{\text{electron}}(x) = D_n \frac{d^2n}{dx^2} - \mu_n \frac{d\phi}{dx}\frac{dn}{dx}</span>
+<span class="sd">       - \mu_n \frac{d^2\phi}{dx^2}n(x) - U_{\text{SRH}}(x) = 0</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">       \mathcal{R}_{\text{hole}}(x) = D_p \frac{d^2p}{dx^2} + \mu_p \frac{d\phi}{dx}\frac{dp}{dx}</span>
+<span class="sd">       + \mu_p \frac{d^2\phi}{dx^2}p(x) - U_{\text{SRH}}(x) = 0</span>
+
+<span class="sd">    Where generation-recombination currents are driven via a non-linear Shockley-Read-Hall</span>
+<span class="sd">    (SRH) trap-assisted recombination profile:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">       U_{\text{SRH}}(x) = \frac{n(x)p(x) - n_i^2}{\tau_p (n(x) + n_i) + \tau_n (p(x) + n_i)}</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">effective_mass</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">permittivity</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">donor_doping</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0e22</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Initialises the self-consistent bipolar Poisson-recombination physics engine.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            effective_mass (float): Material effective mass relative to electron mass (:math:`m_e`).</span>
+<span class="sd">            permittivity (float): Relative static material macroscopic dielectric constant.</span>
+<span class="sd">            donor_doping (float, optional): Background uniform ionized donor concentration in</span>
+<span class="sd">                :math:`\text{m}^{-3}`. Defaults to 1.0e22.</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">L_scale</span> <span class="o">=</span> <span class="mf">1.0e-6</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">N_scale</span> <span class="o">=</span> <span class="mf">1.0e22</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">q</span> <span class="o">=</span> <span class="mf">1.602e-19</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kb_t</span> <span class="o">=</span> <span class="mf">0.0259</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">q</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eps0</span> <span class="o">=</span> <span class="mf">8.854e-12</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eps_r</span> <span class="o">=</span> <span class="n">permittivity</span>
+
+        <span class="c1"># Mobility and Diffusion parameters for both carriers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mu_n</span> <span class="o">=</span> <span class="mf">0.14</span> <span class="o">/</span> <span class="p">(</span><span class="n">effective_mass</span> <span class="o">+</span> <span class="mf">1e-8</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mu_p</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mu_n</span> <span class="o">/</span> <span class="mf">3.0</span>
+        <span class="p">)</span>  <span class="c1"># Physical hole mobility is roughly 1/3 of electron mobility</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu_n</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kb_t</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu_p</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kb_t</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">)</span>
+
+        <span class="c1"># Recombination thresholds</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ni_scaled</span> <span class="o">=</span> <span class="mf">1.5e16</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">N_scale</span>  <span class="c1"># Resolves to 1.5e-6 (Stable)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nd_scaled</span> <span class="o">=</span> <span class="n">donor_doping</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">N_scale</span>
+        <span class="c1"># Scaled lifetime factor (tau * Dn / L^2) bounds the denominator order near ~1.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tau_n_scaled</span> <span class="o">=</span> <span class="mf">1.0e-6</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dn</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">L_scale</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tau_p_scaled</span> <span class="o">=</span> <span class="mf">1.0e-6</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dp</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">L_scale</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+
+<div class="viewcode-block" id="BipolarCoupledPhysics.compute_residuals">
+<a class="viewcode-back" href="../../../../index.html#sciforge.matkit.carrier_pinn.physics.BipolarCoupledPhysics.compute_residuals">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_residuals</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">x_scaled</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Calculates independent residuals for Poisson, Electron, and Hole current loops.</span>
+
+<span class="sd">        Extracts three distinct multi-variable channels from the target network node outputs,</span>
+<span class="sd">        maps physical spatial coordinates using the chain rule, and aggregates</span>
+<span class="sd">        non-linear current recombination losses safely into the computational graph.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            x_scaled (torch.Tensor): Bounded spatial coordinate tracking grid of shape `[Batch Size, 1]`.</span>
+<span class="sd">            model (nn.Module): Neural network tracking multi-variable outputs where:</span>
+<span class="sd">                - Channel 0 maps to electron concentration: :math:`n(x)`.</span>
+<span class="sd">                - Channel 1 maps to hole concentration: :math:`p(x)`.</span>
+<span class="sd">                - Channel 2 maps to local electrostatic potential: :math:`\phi(x)`.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict[str, torch.Tensor]: Dictionary containing three physical validation keys:</span>
+<span class="sd">                - "poisson": Bipolar space-charge electrostatic residual matrix of shape `[Batch Size, 1]`.</span>
+<span class="sd">                - "electron": Electron continuity conservation residual matrix of shape `[Batch Size, 1]`.</span>
+<span class="sd">                - "hole": Hole continuity conservation residual matrix of shape `[Batch Size, 1]`.</span>
+<span class="sd">        """</span>
+        <span class="n">x_scaled</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">predictions</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">x_scaled</span><span class="p">)</span>
+
+        <span class="c1"># Slice output matrix nodes to map three distinct fields simultaneously</span>
+        <span class="n">n_scaled</span> <span class="o">=</span> <span class="n">predictions</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">:</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">p_scaled</span> <span class="o">=</span> <span class="n">predictions</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">phi</span> <span class="o">=</span> <span class="n">predictions</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">:</span><span class="mi">3</span><span class="p">]</span>
+
+        <span class="c1"># First derivatives</span>
+        <span class="n">dn_dx</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span>
+            <span class="n">n_scaled</span><span class="p">,</span>
+            <span class="n">x_scaled</span><span class="p">,</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">n_scaled</span><span class="p">),</span>
+            <span class="n">create_graph</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">retain_graph</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">dp_dx</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span>
+            <span class="n">p_scaled</span><span class="p">,</span>
+            <span class="n">x_scaled</span><span class="p">,</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">p_scaled</span><span class="p">),</span>
+            <span class="n">create_graph</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">retain_graph</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">dphi_dx</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span>
+            <span class="n">phi</span><span class="p">,</span> <span class="n">x_scaled</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">phi</span><span class="p">),</span> <span class="n">create_graph</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">retain_graph</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># Second derivatives</span>
+        <span class="n">d2n_dx2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span>
+            <span class="n">dn_dx</span><span class="p">,</span>
+            <span class="n">x_scaled</span><span class="p">,</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">dn_dx</span><span class="p">),</span>
+            <span class="n">create_graph</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">retain_graph</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">d2dp_dx2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span>
+            <span class="n">dp_dx</span><span class="p">,</span>
+            <span class="n">x_scaled</span><span class="p">,</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">dp_dx</span><span class="p">),</span>
+            <span class="n">create_graph</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">retain_graph</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">d2phi_dx2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span>
+            <span class="n">dphi_dx</span><span class="p">,</span>
+            <span class="n">x_scaled</span><span class="p">,</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">dphi_dx</span><span class="p">),</span>
+            <span class="n">create_graph</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">retain_graph</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># Restore physical dimensions for calculus evaluation loops</span>
+        <span class="c1"># dn_dx_phys = dn_dx / self.L_scale</span>
+        <span class="c1"># dp_dx_phys = dp_dx / self.L_scale</span>
+        <span class="c1"># dphi_dx_phys = dphi_dx / self.L_scale</span>
+        <span class="c1"># d2n_dx2_phys = d2n_dx2 / (self.L_scale**2)</span>
+        <span class="c1"># d2dp_dx2_phys = d2dp_dx2 / (self.L_scale**2)</span>
+        <span class="c1"># d2phi_dx2_phys = d2phi_dx2 / (self.L_scale**2)</span>
+
+        <span class="c1"># n_phys = n_scaled * self.N_scale</span>
+        <span class="c1"># p_phys = p_scaled * self.N_scale</span>
+
+        <span class="c1"># Non-linear SRH Recombination Calculation</span>
+        <span class="c1"># u_srh = (n_phys * p_phys - self.ni**2) / (</span>
+        <span class="c1">#     self.tau_p * (n_phys + self.ni) + self.tau_n * (p_phys + self.ni)</span>
+        <span class="c1"># )</span>
+
+        <span class="n">n_clamp</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="n">n_scaled</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+        <span class="n">p_clamp</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="n">p_scaled</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+
+        <span class="n">u_srh_scaled</span> <span class="o">=</span> <span class="p">(</span><span class="n">n_clamp</span> <span class="o">*</span> <span class="n">p_clamp</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">ni_scaled</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tau_p_scaled</span> <span class="o">*</span> <span class="p">(</span><span class="n">n_clamp</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">ni_scaled</span><span class="p">)</span>
+            <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">tau_n_scaled</span> <span class="o">*</span> <span class="p">(</span><span class="n">p_clamp</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">ni_scaled</span><span class="p">)</span>
+            <span class="o">+</span> <span class="mf">1e-5</span>
+        <span class="p">)</span>
+
+        <span class="c1"># 1. Bipolar Poisson Residual</span>
+        <span class="n">poisson_constant</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">L_scale</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">N_scale</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eps0</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">eps_r</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">poisson_residual</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">d2phi_dx2</span> <span class="o">+</span> <span class="n">poisson_constant</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nd_scaled</span> <span class="o">-</span> <span class="n">n_scaled</span> <span class="o">+</span> <span class="n">p_scaled</span><span class="p">)</span>
+        <span class="p">)</span> <span class="o">*</span> <span class="mf">1.0e-3</span>
+
+        <span class="c1"># 2. Electron Continuity Residual (Dimensionless Space)</span>
+        <span class="n">electron_residual</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">d2n_dx2</span>
+            <span class="o">-</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mu_n</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">dn</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">dphi_dx</span> <span class="o">*</span> <span class="n">dn_dx</span> <span class="o">+</span> <span class="n">d2phi_dx2</span> <span class="o">*</span> <span class="n">n_scaled</span><span class="p">)</span>
+            <span class="o">-</span> <span class="n">u_srh_scaled</span>
+        <span class="p">)</span>
+
+        <span class="c1"># 3. Hole Continuity Residual (Dimensionless Space)</span>
+        <span class="n">hole_residual</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">d2dp_dx2</span>
+            <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mu_p</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">dp</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">dphi_dx</span> <span class="o">*</span> <span class="n">dp_dx</span> <span class="o">+</span> <span class="n">d2phi_dx2</span> <span class="o">*</span> <span class="n">p_scaled</span><span class="p">)</span>
+            <span class="o">-</span> <span class="n">u_srh_scaled</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">"poisson"</span><span class="p">:</span> <span class="n">poisson_residual</span><span class="p">,</span>
+            <span class="s2">"electron"</span><span class="p">:</span> <span class="n">electron_residual</span><span class="p">,</span>
+            <span class="s2">"hole"</span><span class="p">:</span> <span class="n">hole_residual</span><span class="p">,</span>
+        <span class="p">}</span></div>
+</div>
+
 </pre></div>
 
            </div>
