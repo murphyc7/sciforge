@@ -26,8 +26,8 @@ class CarrierPINN(nn.Module):
 
         Args:
             input_dim (int, optional): Coordinate parameter input counts. Defaults to 1.
-            output_dim (int, optional): Configurable nodes. Use 1 for single-field drift-diffusion,
-                use 2 for coupled Poisson-Drift-Diffusion solvers. Defaults to 1.
+            output_dim (int, optional): Configurable nodes. Use 1 for constant, 2 for coupled,
+                and 3 for bipolar solvers. Defaults to 1.
             hidden_layers (int, optional): Total processing layer depths. Defaults to 4.
             hidden_dim (int, optional): Processing channels per layer. Defaults to 50.
         """

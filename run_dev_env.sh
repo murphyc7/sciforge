@@ -62,5 +62,8 @@ python "${REPO_ROOT}/apps/run_carrier_simulation.py" --material-id mp-100 --engi
 echo "=== 6b. Executing Self-Consistent Poisson-Coupled PINN Simulation ==="
 python "${REPO_ROOT}/apps/run_carrier_simulation.py" --material-id mp-100 --engine coupled --epochs 500
 
+echo "=== 6c. Executing Bipolar Coupled Poisson-Recombination PINN Simulation ==="
+python "${REPO_ROOT}/apps/run_carrier_simulation.py" --material-id mp-100 --engine bipolar --epochs 200
+
 echo "=== 7. Final SQL Simulation Ledger Registry Check ==="
 PGPASSWORD="secure_pass" psql -h localhost -U postgres_user -d sciforge_db -x -c "SELECT run_id, material_id, engine_mode, final_total_loss, execution_time_seconds, model_artifact_path FROM carrier_pinn_simulation_registry;"

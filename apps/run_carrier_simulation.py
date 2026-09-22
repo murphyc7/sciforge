@@ -9,6 +9,7 @@ import torch.nn as nn
 
 from sciforge.matkit.carrier_pinn.models import CarrierPINN
 from sciforge.matkit.carrier_pinn.physics import (
+    BipolarCoupledPhysics,
     ConstantFieldPhysics,
     PoissonCoupledPhysics,
 )
@@ -31,7 +32,7 @@ def main() -> None:
     parser.add_argument(
         "--engine",
         type=str,
-        choices=["constant", "coupled"],
+        choices=["constant", "coupled", "bipolar"],
         default="constant",
         help="Physics mode selector",
     )
@@ -65,11 +66,17 @@ def main() -> None:
         physics_engine = ConstantFieldPhysics(effective_mass=m_eff, permittivity=eps)
         n_boundary_left = torch.tensor([[1.0]], dtype=torch.float32)
         n_boundary_right = torch.tensor([[0.0]], dtype=torch.float32)
-    else:
+    elif args.engine == "coupled":
         model = CarrierPINN(output_dim=2)
         physics_engine = PoissonCoupledPhysics(effective_mass=m_eff, permittivity=eps)
         n_boundary_left = torch.tensor([[1.0, 0.0]], dtype=torch.float32)
         n_boundary_right = torch.tensor([[0.1, 0.5]], dtype=torch.float32)
+    else:
+        model = CarrierPINN(output_dim=3)
+        physics_engine = BipolarCoupledPhysics(effective_mass=m_eff, permittivity=eps)
+        # Left boundary boundary conditions: [n_scaled, p_scaled, phi_scaled]
+        n_boundary_left = torch.tensor([[1.0, 0.01, 0.0]], dtype=torch.float32)
+        n_boundary_right = torch.tensor([[0.1, 1.0, 0.8]], dtype=torch.float32)
 
     optimiser = torch.optim.Adam(model.parameters(), lr=1e-3)
     mse_criterion = nn.MSELoss()
@@ -124,7 +131,7 @@ def main() -> None:
             title=f"Steady-State 1D Transport Profiles ({formula})",
         )
         logger.info("Constant field visualisation saved successfully.")
-    else:
+    elif args.engine == "coupled":
         plotter.render(
             save_path="example_visualisations/simulation_coupled.png",
             x=np_x,
@@ -133,6 +140,19 @@ def main() -> None:
             title=f"Self-Consistent Multi-Field Solutions ({formula})",
         )
         logger.info("Coupled self-consistent field visualisation saved successfully.")
+    else:
+        # Column 0 = electrons n(x) | Column 1 = holes p(x) | Column 2 = potential phi(x)
+        plotter.render(
+            save_path="example_visualisations/simulation_bipolar.png",
+            x=np_x,
+            n=np_out[:, 0:1],  # Electron tracking matrix array slice
+            p=np_out[:, 1:2],  # Hole tracking matrix array slice
+            phi=np_out[:, 2:3],  # Electrostatic potential matrix array slice
+            title=f"Bipolar Self-Consistent Transport Profiles ({formula})",
+        )
+        logger.info(
+            "Bipolar multi-field self-consistent visualisation saved successfully."
+        )
 
     # 3. Package numeric primitives for MLOps ledger tracking
     val_total = float(total_loss.item())
