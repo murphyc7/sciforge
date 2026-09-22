@@ -4,6 +4,7 @@ import logging
 import sys
 import time
 
+import numpy as np
 import torch
 import torch.nn as nn
 
@@ -14,6 +15,7 @@ from sciforge.matkit.carrier_pinn.physics import (
     PoissonCoupledPhysics,
 )
 from sciforge.matkit.registry.manager import SimulationTracker
+from sciforge.matkit.solvers.classical_jax import JaxClassicalSolver
 from sciforge.matkit.utils.db_client import DatabaseClient, MaterialModel
 from sciforge.visualisation.components import DualAxisTransportPlotter
 
@@ -110,6 +112,22 @@ def main() -> None:
                 f"Epoch {epoch:04d} | Total Loss: {total_loss.item():.4e} | BC Mismatch: {loss_bc.item():.4e}"
             )
 
+    logger.info("Executing accelerated classical JAX solver validation pass...")
+
+    # Initialise high-density 500-point validation mesh
+    jax_solver = JaxClassicalSolver(mesh_points=500)
+
+    if args.engine in ["constant", "coupled"]:
+        _, jax_n, _ = jax_solver.solve_steady_state(
+            engine_mode=args.engine,
+            effective_mass=m_eff,
+            permittivity=eps,
+            iterations=2000,
+        )
+        n_jax_numpy = np.array(jax_n)
+    else:
+        n_jax_numpy = None
+
     # Sync eval, plotting, MLOPS registration phase
     logger.info("Simulation complete. Commencing evaluation and graphics generation...")
 
@@ -128,6 +146,7 @@ def main() -> None:
             save_path="example_visualisations/simulation_constant.png",
             x=np_x,
             n=np_out[:, 0:1],
+            n_jax=n_jax_numpy,
             title=f"Steady-State 1D Transport Profiles ({formula})",
         )
         logger.info("Constant field visualisation saved successfully.")
@@ -137,6 +156,7 @@ def main() -> None:
             x=np_x,
             n=np_out[:, 0:1],
             phi=np_out[:, 1:2],
+            n_jax=n_jax_numpy,
             title=f"Self-Consistent Multi-Field Solutions ({formula})",
         )
         logger.info("Coupled self-consistent field visualisation saved successfully.")

@@ -109,3 +109,31 @@ def test_dual_axis_plotter_renders_bipolar_multi_field_profiles(tmp_path) -> Non
 
     assert os.path.exists(output_file)
     assert os.path.getsize(output_file) > 0
+
+
+def test_dual_axis_plotter_overlays_jax_ground_truth_validation(tmp_path) -> None:
+    """Verifies that the plotter successfully renders the JAX classical FDM ground truth scatter layer."""
+    # Arrange: Setup an isolated file target path using pytest's directory fixture
+    output_file = os.path.join(tmp_path, "test_jax_overlay.png")
+
+    # Generate mock evaluation arrays matching your 500-point uniform grid spacing
+    np_x = np.linspace(0.0, 1.0, 100)
+    np_n = np.exp(-np_x)
+
+    # Simulate a dense 500-point ground truth vector returned by the JaxClassicalSolver
+    np_n_jax = np.linspace(1.0, 0.0, 500)
+
+    plotter = DualAxisTransportPlotter()
+
+    # Act: Trigger the rendering context passing the mandatory data alongside the 'n_jax' target
+    plotter.render(
+        save_path=output_file,
+        x=np_x,
+        n=np_n,
+        n_jax=np_n_jax,
+        title="PINN vs Classical FDM Verification Profiles",
+    )
+
+    # Assert: Confirm that the canvas successfully compiled code loops and wrote the graphic to disk
+    assert os.path.exists(output_file)
+    assert os.path.getsize(output_file) > 0

@@ -3,6 +3,7 @@
 from typing import Any
 
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sciforge.visualisation.base_plotter import BasePlotter
 
@@ -42,6 +43,7 @@ class DualAxisTransportPlotter(BasePlotter):
         p = kwargs.get("p")
         phi = kwargs.get("phi")
         title_text = kwargs.get("title")
+        n_jax = kwargs.get("n_jax")
 
         # Extract optional experimental configuration boundaries
         x_exp = kwargs.get("x_exp")
@@ -82,6 +84,21 @@ class DualAxisTransportPlotter(BasePlotter):
                 label="Holes ($p$)",
             )
             lines = lines + line_p
+
+        # Optional Overlay: High-Performance JAX Classical FDM Ground Truth Validation
+        if n_jax is not None:
+            # Under-sample dense 500-point mesh slightly for visibility on graph overlays
+            x_jax = np.linspace(0.0, 1.0, len(n_jax))
+            scatter_jax = ax1.scatter(
+                x_jax[::10],
+                n_jax.flatten()[::10],
+                color="black",
+                marker="x",
+                s=15,
+                linewidths=0.8,
+                label="Classical FDM Ground Truth (JAX)",
+            )
+            lines = lines + [scatter_jax]
 
         # Optional overlay: Experimental Scattered Data Track
         if x_exp is not None and n_exp is not None:

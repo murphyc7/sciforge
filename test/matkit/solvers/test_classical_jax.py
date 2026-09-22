@@ -1,52 +1,55 @@
-"""Unit testing suite for high-performance JAX classical numerical solvers.
-
-Validates grid discretisation compliance, execution array shape scaling,
-and JIT relaxation convergence states.
-"""
+"""Tests for murphyc7/sciforge/src/sciforge/matkit/solvers/classical_jax.py"""
 
 import jax.numpy as jnp
 import pytest
 
 from sciforge.matkit.solvers.classical_jax import (
     JaxClassicalSolver,
-    _fdm_relaxation_step,
+    _fdm_transport_relaxation_step,
+    _solve_poisson_matrix,
 )
 
 
-def test_fdm_relaxation_step_preserves_boundary_conditions() -> None:
-    """Verifies that the JIT-compiled relaxation step enforces hard edge constraints."""
-    n_grid = (
-        jnp.tensor([1.0, 0.5, 0.0])
-        if hasattr(jnp, "tensor")
-        else jnp.array([1.0, 0.5, 0.0])
-    )
-    phi_grid = jnp.array([0.0, 0.25, 0.5])
+def test_solve_poisson_matrix_dimensions_and_boundaries() -> None:
+    """Verifies that the JIT Poisson matrix inversion maps correct shapes and boundary flags."""
+    n_grid = jnp.linspace(1.0, 0.1, 50)
+    phi = _solve_poisson_matrix(n_grid, dx=0.02, gamma=10.0, nd=1.0)
 
-    updated_n = _fdm_relaxation_step(n_grid, phi_grid, dx=0.5, peclet_local=1.0)
-
-    # Boundary edge values must remain hard-pinned
-    assert float(updated_n[0]) == 1.0
-    assert float(updated_n[-1]) == 0.0
-    assert updated_n.shape == (3,)
+    assert phi.shape == (50,)
+    assert float(phi[0]) == 0.0
+    assert float(phi[-1]) == 0.5
 
 
-def test_jax_solver_converges_on_dense_mesh_profile() -> None:
-    """Confirms the classical solver successfully optimises a 500-point validation grid."""
-    # Arrange: Initialise solver tracking 500 mesh positions
+def test_fdm_transport_relaxation_step_boundaries() -> None:
+    """Verifies that the central-difference transport relaxation step preserves boundary limits."""
+    n_grid = jnp.linspace(1.0, 0.1, 50)
+    phi_grid = jnp.linspace(0.0, 0.5, 50)
+
+    n_new = _fdm_transport_relaxation_step(n_grid, phi_grid, dx=0.02, beta=0.0259)
+
+    assert n_new.shape == (50,)
+    assert float(n_new[0]) == 1.0
+    assert float(n_new[-1]) == 0.1
+
+
+def test_jax_solver_factory_processes_all_engine_modes() -> None:
+    """Confirms the classical solver successfully optimises 500-point multi-engine validation grids."""
     solver = JaxClassicalSolver(mesh_points=500)
 
-    # Act: Run the JIT-accelerated solver pass
-    x_mesh, n_mesh = solver.solve_steady_state(
-        effective_mass=0.067, permittivity=12.9, electric_field=1.0e3, iterations=100
+    # 1. Test Constant Field Engine Path
+    x_c, n_c, phi_c = solver.solve_steady_state(
+        engine_mode="constant", effective_mass=0.067, permittivity=12.9, iterations=5
     )
+    assert x_c.shape == (500,)
+    assert n_c.shape == (500,)
+    assert float(phi_c[0]) == 0.0
 
-    # Assert: Validate dimensions, grid intervals, and array bounding limits
-    assert solver.mesh_points == 500
-    assert x_mesh.shape == (500,)
-    assert n_mesh.shape == (500,)
-    assert (
-        float(n_mesh[0]) == pytest.approx(1.0, abs=1e-3)
-        if "pytest" in globals()
-        else True
+    # 2. Test Coupled Poisson Engine Path
+    x_p, n_p, phi_p = solver.solve_steady_state(
+        engine_mode="coupled", effective_mass=0.067, permittivity=12.9, iterations=5
     )
-    assert float(n_mesh[-1]) == 0.0
+    assert x_p.shape == (500,)
+    assert n_p.shape == (500,)
+    assert phi_p.shape == (500,)
+    assert float(n_p[0]) == pytest.approx(1.0, abs=1e-3)
+    assert float(n_p[-1]) == pytest.approx(0.1, abs=1e-3)
