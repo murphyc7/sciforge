@@ -310,15 +310,16 @@ class BipolarCoupledPhysics(BasePhysicsSolver):
         self.dp = self.mu_p * (self.kb_t / self.q)
 
         # Recombination thresholds
-        self.tau_n = 1.0e-6  # Electron lifetime (s)
-        self.tau_p = 1.0e-6  # Hole lifetime (s)
-        self.ni = 1.5e16  # Intrinsic carrier density (m^-3)
+        self.ni_scaled = 1.5e16 / self.N_scale  # Resolves to 1.5e-6 (Stable)
         self.nd_scaled = donor_doping / self.N_scale
+        # Scaled lifetime factor (tau * Dn / L^2) bounds the denominator order near ~1.0
+        self.tau_n_scaled = 1.0e-6 * (self.dn / (self.L_scale**2))
+        self.tau_p_scaled = 1.0e-6 * (self.dp / (self.L_scale**2))
 
     def compute_residuals(
         self, x_scaled: torch.Tensor, model: torch.nn.Module
     ) -> dict[str, torch.Tensor]:
-        """Calculates independent residuals for Poisson, Electron, and Hole current loops.
+        r"""Calculates independent residuals for Poisson, Electron, and Hole current loops.
 
         Extracts three distinct multi-variable channels from the target network node outputs,
         maps physical spatial coordinates using the chain rule, and aggregates
@@ -388,40 +389,50 @@ class BipolarCoupledPhysics(BasePhysicsSolver):
         )[0]
 
         # Restore physical dimensions for calculus evaluation loops
-        dn_dx_phys = dn_dx / self.L_scale
-        dp_dx_phys = dp_dx / self.L_scale
-        dphi_dx_phys = dphi_dx / self.L_scale
-        d2n_dx2_phys = d2n_dx2 / (self.L_scale**2)
-        d2dp_dx2_phys = d2dp_dx2 / (self.L_scale**2)
-        d2phi_dx2_phys = d2phi_dx2 / (self.L_scale**2)
+        # dn_dx_phys = dn_dx / self.L_scale
+        # dp_dx_phys = dp_dx / self.L_scale
+        # dphi_dx_phys = dphi_dx / self.L_scale
+        # d2n_dx2_phys = d2n_dx2 / (self.L_scale**2)
+        # d2dp_dx2_phys = d2dp_dx2 / (self.L_scale**2)
+        # d2phi_dx2_phys = d2phi_dx2 / (self.L_scale**2)
 
-        n_phys = n_scaled * self.N_scale
-        p_phys = p_scaled * self.N_scale
+        # n_phys = n_scaled * self.N_scale
+        # p_phys = p_scaled * self.N_scale
 
         # Non-linear SRH Recombination Calculation
-        u_srh = (n_phys * p_phys - self.ni**2) / (
-            self.tau_p * (n_phys + self.ni) + self.tau_n * (p_phys + self.ni)
+        # u_srh = (n_phys * p_phys - self.ni**2) / (
+        #     self.tau_p * (n_phys + self.ni) + self.tau_n * (p_phys + self.ni)
+        # )
+
+        n_clamp = torch.clamp(n_scaled, min=0.0)
+        p_clamp = torch.clamp(p_scaled, min=0.0)
+
+        u_srh_scaled = (n_clamp * p_clamp - self.ni_scaled**2) / (
+            self.tau_p_scaled * (n_clamp + self.ni_scaled)
+            + self.tau_n_scaled * (p_clamp + self.ni_scaled)
+            + 1e-5
         )
 
         # 1. Bipolar Poisson Residual
-        poisson_constant = self.q / (self.eps0 * self.eps_r)
+        poisson_constant = (
+            (self.L_scale**2) * (self.q * self.N_scale) / (self.eps0 * self.eps_r)
+        )
         poisson_residual = (
-            d2phi_dx2_phys
-            + poisson_constant * (self.nd_scaled * self.N_scale - n_phys + p_phys)
+            d2phi_dx2 + poisson_constant * (self.nd_scaled - n_scaled + p_scaled)
         ) * 1.0e-3
 
-        # 2. Electron Continuity Residual
+        # 2. Electron Continuity Residual (Dimensionless Space)
         electron_residual = (
-            self.dn * d2n_dx2_phys
-            - self.mu_n * (dphi_dx_phys * dn_dx_phys + d2phi_dx2_phys * n_phys)
-            - u_srh
+            d2n_dx2
+            - (self.mu_n / self.dn) * (dphi_dx * dn_dx + d2phi_dx2 * n_scaled)
+            - u_srh_scaled
         )
 
-        # 3. Hole Continuity Residual
+        # 3. Hole Continuity Residual (Dimensionless Space)
         hole_residual = (
-            self.dp * d2dp_dx2_phys
-            + self.mu_p * (dphi_dx_phys * dp_dx_phys + d2phi_dx2_phys * p_phys)
-            - u_srh
+            d2dp_dx2
+            + (self.mu_p / self.dp) * (dphi_dx * dp_dx + d2phi_dx2 * p_scaled)
+            - u_srh_scaled
         )
 
         return {

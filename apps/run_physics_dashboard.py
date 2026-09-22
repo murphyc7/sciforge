@@ -6,6 +6,7 @@ triggers back-to-back training loops, and renders responsive publication-quality
 """
 
 import logging
+import os
 
 import plotly.graph_objects as go
 import torch
@@ -30,6 +31,13 @@ app = Dash(
     __name__,
     title="SciForge Physics Portal",
 )
+
+# Explicitly enforce your verified development credentials if the
+# environment terminal has not broadcasted the DATABASE_URL variable.
+if "DATABASE_URL" not in os.environ:
+    os.environ["DATABASE_URL"] = (
+        "postgresql://postgres_user:secure_pass@localhost:5432/sciforge_db"
+    )
 
 # Establish data architecture client
 db_client = DatabaseClient()

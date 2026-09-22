@@ -32,7 +32,7 @@ def main() -> None:
     parser.add_argument(
         "--engine",
         type=str,
-        choices=["constant", "coupled"],
+        choices=["constant", "coupled", "bipolar"],
         default="constant",
         help="Physics mode selector",
     )
@@ -131,7 +131,7 @@ def main() -> None:
             title=f"Steady-State 1D Transport Profiles ({formula})",
         )
         logger.info("Constant field visualisation saved successfully.")
-    else:
+    elif args.engine == "coupled":
         plotter.render(
             save_path="example_visualisations/simulation_coupled.png",
             x=np_x,
@@ -140,6 +140,19 @@ def main() -> None:
             title=f"Self-Consistent Multi-Field Solutions ({formula})",
         )
         logger.info("Coupled self-consistent field visualisation saved successfully.")
+    else:
+        # Column 0 = electrons n(x) | Column 1 = holes p(x) | Column 2 = potential phi(x)
+        plotter.render(
+            save_path="example_visualisations/simulation_bipolar.png",
+            x=np_x,
+            n=np_out[:, 0:1],  # Electron tracking matrix array slice
+            p=np_out[:, 1:2],  # Hole tracking matrix array slice
+            phi=np_out[:, 2:3],  # Electrostatic potential matrix array slice
+            title=f"Bipolar Self-Consistent Transport Profiles ({formula})",
+        )
+        logger.info(
+            "Bipolar multi-field self-consistent visualisation saved successfully."
+        )
 
     # 3. Package numeric primitives for MLOps ledger tracking
     val_total = float(total_loss.item())

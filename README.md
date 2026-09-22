@@ -62,6 +62,7 @@ $$\mathcal{R}_{\text{electron}}(x) = D_n \frac{d^2n}{dx^2} - \mu_n \frac{d\phi}{
 
 $$\mathcal{R}_{\text{hole}}(x) = D_p \frac{d^2p}{dx^2} + \mu_p \frac{d\phi}{dx}\frac{dp}{dx} + \mu_p \frac{d^2\phi}{dx^2}p(x) - U_{\text{SRH}}(x) = 0$$
 
+![Bipolar Coupled Run](example_visualisations/simulation_bipolar.png)
 
 Where:
 * **Mobility Scaling**: Material mobility scales dynamically based on physical constraints fetched from your database: $\mu_n = \frac{0.14}{m^*}$.
