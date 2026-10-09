@@ -18,7 +18,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="Materials Discovery ETL & Clustering Runner"
     )
-    # FIX: Change to accept one or more material IDs as a list
+    # Accept one or more material IDs as a list
     parser.add_argument(
         "--material-ids",
         type=str,
