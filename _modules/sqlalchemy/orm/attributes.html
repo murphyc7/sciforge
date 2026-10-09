@@ -94,6 +94,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">NamedTuple</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">overload</span>
@@ -101,6 +102,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tuple</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Type</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeGuard</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeVar</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Union</span>
 
@@ -113,6 +115,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">ATTR_WAS_SET</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">CALLABLES_OK</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFERRED_HISTORY_LOAD</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">DONT_SET</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">INCLUDE_PENDING_MUTATIONS</span>  <span class="c1"># noqa</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">INIT_OK</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">instance_dict</span> <span class="k">as</span> <span class="n">instance_dict</span>
@@ -157,9 +160,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">..sql.cache_key</span><span class="w"> </span><span class="kn">import</span> <span class="n">HasCacheKey</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..sql.visitors</span><span class="w"> </span><span class="kn">import</span> <span class="n">_TraverseInternalsType</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..sql.visitors</span><span class="w"> </span><span class="kn">import</span> <span class="n">InternalTraversal</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">..util.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..util.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Self</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">..util.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeGuard</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">._typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">_EntityType</span>
@@ -174,7 +175,7 @@
     <span class="kn">from</span><span class="w"> </span><span class="nn">.relationships</span><span class="w"> </span><span class="kn">import</span> <span class="n">RelationshipProperty</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">.state</span><span class="w"> </span><span class="kn">import</span> <span class="n">InstanceState</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">AliasedInsp</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">.writeonly</span><span class="w"> </span><span class="kn">import</span> <span class="n">WriteOnlyAttributeImpl</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.writeonly</span><span class="w"> </span><span class="kn">import</span> <span class="n">_WriteOnlyAttributeImpl</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">..event.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">_Dispatch</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">..sql._typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">_ColumnExpressionArgument</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">..sql._typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">_DMLColumnArgument</span>
@@ -252,7 +253,7 @@
     <span class="n">class_</span><span class="p">:</span> <span class="n">_ExternalEntityType</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span>
     <span class="n">key</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">parententity</span><span class="p">:</span> <span class="n">_InternalEntityType</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span>
-    <span class="n">impl</span><span class="p">:</span> <span class="n">AttributeImpl</span>
+    <span class="n">impl</span><span class="p">:</span> <span class="n">_AttributeImpl</span>
     <span class="n">comparator</span><span class="p">:</span> <span class="n">interfaces</span><span class="o">.</span><span class="n">PropComparator</span><span class="p">[</span><span class="n">_T_co</span><span class="p">]</span>
     <span class="n">_of_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">_InternalEntityType</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span>
     <span class="n">_extra_criteria</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">ColumnElement</span><span class="p">[</span><span class="nb">bool</span><span class="p">],</span> <span class="o">...</span><span class="p">]</span>
@@ -268,7 +269,7 @@
         <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">parententity</span><span class="p">:</span> <span class="n">_InternalEntityType</span><span class="p">[</span><span class="n">_O</span><span class="p">],</span>
         <span class="n">comparator</span><span class="p">:</span> <span class="n">interfaces</span><span class="o">.</span><span class="n">PropComparator</span><span class="p">[</span><span class="n">_T_co</span><span class="p">],</span>
-        <span class="n">impl</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AttributeImpl</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">impl</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">_AttributeImpl</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">of_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">_InternalEntityType</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">extra_criteria</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">ColumnElement</span><span class="p">[</span><span class="nb">bool</span><span class="p">],</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(),</span>
     <span class="p">):</span>
@@ -281,7 +282,7 @@
         <span class="c1"># interim class manager setup, there's a check for None to see if it</span>
         <span class="c1"># needs to be populated, so we assign None here leaving the attribute</span>
         <span class="c1"># in a temporarily not-type-correct state</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">impl</span> <span class="o">=</span> <span class="n">impl</span>  <span class="c1"># type: ignore</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">impl</span> <span class="o">=</span> <span class="n">impl</span>  <span class="c1"># type: ignore[assignment]</span>
 
         <span class="k">assert</span> <span class="n">comparator</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">comparator</span> <span class="o">=</span> <span class="n">comparator</span>
@@ -298,7 +299,7 @@
                 <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">base</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">dispatch</span><span class="o">.</span><span class="n">_update</span><span class="p">(</span><span class="n">base</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">dispatch</span><span class="p">)</span>
                     <span class="k">if</span> <span class="n">base</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">dispatch</span><span class="o">.</span><span class="n">_active_history</span><span class="p">:</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">dispatch</span><span class="o">.</span><span class="n">_active_history</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># type: ignore</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">dispatch</span><span class="o">.</span><span class="n">_active_history</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># type: ignore[attr-defined]  # noqa: E501</span>
 
     <span class="n">_cache_key_traversal</span> <span class="o">=</span> <span class="p">[</span>
         <span class="p">(</span><span class="s2">"key"</span><span class="p">,</span> <span class="n">visitors</span><span class="o">.</span><span class="n">ExtendedInternalTraversal</span><span class="o">.</span><span class="n">dp_string</span><span class="p">),</span>
@@ -459,6 +460,11 @@
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">comparator</span><span class="o">.</span><span class="n">_bulk_update_tuples</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_bulk_dml_setter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""return a callable that will process a bulk INSERT value"""</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">comparator</span><span class="o">.</span><span class="n">_bulk_dml_setter</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
     <span class="k">def</span><span class="w"> </span><span class="nf">adapt_to_entity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">adapt_to_entity</span><span class="p">:</span> <span class="n">AliasedInsp</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
         <span class="k">assert</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_of_type</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span>
@@ -596,11 +602,11 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">__doc__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_doc</span>
 
-    <span class="nd">@__doc__</span><span class="o">.</span><span class="n">setter</span>  <span class="c1"># type: ignore</span>
+    <span class="nd">@__doc__</span><span class="o">.</span><span class="n">setter</span>  <span class="c1"># type: ignore[no-redef]</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">__doc__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_doc</span> <span class="o">=</span> <span class="n">value</span>
 
-    <span class="nd">@__doc__</span><span class="o">.</span><span class="n">classlevel</span>  <span class="c1"># type: ignore</span>
+    <span class="nd">@__doc__</span><span class="o">.</span><span class="n">classlevel</span>  <span class="c1"># type: ignore[no-redef]</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">__doc__</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="vm">__doc__</span>
 
@@ -638,7 +644,7 @@
 
 
 <span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">AdHocHasEntityNamespace</span><span class="p">(</span><span class="n">HasCacheKey</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_AdHocHasEntityNamespace</span><span class="p">(</span><span class="n">HasCacheKey</span><span class="p">):</span>
     <span class="n">_traverse_internals</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="n">_TraverseInternalsType</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
         <span class="p">(</span><span class="s2">"_entity_namespace"</span><span class="p">,</span> <span class="n">InternalTraversal</span><span class="o">.</span><span class="n">dp_has_cache_key</span><span class="p">),</span>
     <span class="p">]</span>
@@ -654,7 +660,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_entity_namespace</span><span class="o">.</span><span class="n">entity_namespace</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">create_proxied_attribute</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_create_proxied_attribute</span><span class="p">(</span>
     <span class="n">descriptor</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">QueryableAttribute</span><span class="p">[</span><span class="n">Any</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">"""Create an QueryableAttribute / user descriptor hybrid.</span>
@@ -733,7 +739,7 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="c1"># used by hybrid attributes which try to remain</span>
                 <span class="c1"># agnostic of any ORM concepts like mappers</span>
-                <span class="k">return</span> <span class="n">AdHocHasEntityNamespace</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parententity</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">_AdHocHasEntityNamespace</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parententity</span><span class="p">)</span>
 
         <span class="nd">@property</span>
         <span class="k">def</span><span class="w"> </span><span class="nf">property</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -869,7 +875,7 @@
 
     <span class="vm">__slots__</span> <span class="o">=</span> <span class="s2">"impl"</span><span class="p">,</span> <span class="s2">"op"</span><span class="p">,</span> <span class="s2">"parent_token"</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute_impl</span><span class="p">:</span> <span class="n">AttributeImpl</span><span class="p">,</span> <span class="n">op</span><span class="p">:</span> <span class="n">util</span><span class="o">.</span><span class="n">symbol</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute_impl</span><span class="p">:</span> <span class="n">_AttributeImpl</span><span class="p">,</span> <span class="n">op</span><span class="p">:</span> <span class="n">util</span><span class="o">.</span><span class="n">symbol</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">impl</span> <span class="o">=</span> <span class="n">attribute_impl</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">op</span> <span class="o">=</span> <span class="n">op</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">parent_token</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">impl</span><span class="o">.</span><span class="n">parent_token</span>
@@ -893,7 +899,7 @@
 <span class="n">Event</span> <span class="o">=</span> <span class="n">AttributeEventToken</span>  <span class="c1"># legacy</span>
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">AttributeImpl</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_AttributeImpl</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""internal implementation for instrumented attributes."""</span>
 
     <span class="n">collection</span><span class="p">:</span> <span class="nb">bool</span>
@@ -1123,20 +1129,9 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_default_value</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">InstanceState</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">dict_</span><span class="p">:</span> <span class="n">_InstanceDict</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Produce an empty value for an uninitialized scalar attribute."""</span>
+<span class="w">        </span><span class="sd">"""Produce an empty value for an uninitialized attribute."""</span>
 
-        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dict_</span><span class="p">,</span> <span class="p">(</span>
-            <span class="s2">"_default_value should only be invoked for an "</span>
-            <span class="s2">"uninitialized or expired attribute"</span>
-        <span class="p">)</span>
-
-        <span class="n">value</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="k">for</span> <span class="n">fn</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dispatch</span><span class="o">.</span><span class="n">init_scalar</span><span class="p">:</span>
-            <span class="n">ret</span> <span class="o">=</span> <span class="n">fn</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">dict_</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">ret</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">ATTR_EMPTY</span><span class="p">:</span>
-                <span class="n">value</span> <span class="o">=</span> <span class="n">ret</span>
-
-        <span class="k">return</span> <span class="n">value</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -1280,7 +1275,7 @@
         <span class="k">return</span> <span class="n">value</span>
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">ScalarAttributeImpl</span><span class="p">(</span><span class="n">AttributeImpl</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_ScalarAttributeImpl</span><span class="p">(</span><span class="n">_AttributeImpl</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""represents a scalar value-holding InstrumentedAttribute."""</span>
 
     <span class="n">default_accepts_scalar_loader</span> <span class="o">=</span> <span class="kc">True</span>
@@ -1289,14 +1284,37 @@
     <span class="n">collection</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="n">dynamic</span> <span class="o">=</span> <span class="kc">False</span>
 
-    <span class="vm">__slots__</span> <span class="o">=</span> <span class="s2">"_replace_token"</span><span class="p">,</span> <span class="s2">"_append_token"</span><span class="p">,</span> <span class="s2">"_remove_token"</span>
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">"_default_scalar_value"</span><span class="p">,</span>
+        <span class="s2">"_replace_token"</span><span class="p">,</span>
+        <span class="s2">"_append_token"</span><span class="p">,</span>
+        <span class="s2">"_remove_token"</span><span class="p">,</span>
+    <span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">arg</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">arg</span><span class="p">,</span> <span class="n">default_scalar_value</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">arg</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_default_scalar_value</span> <span class="o">=</span> <span class="n">default_scalar_value</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_replace_token</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_append_token</span> <span class="o">=</span> <span class="n">AttributeEventToken</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span> <span class="n">OP_REPLACE</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_remove_token</span> <span class="o">=</span> <span class="n">AttributeEventToken</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">OP_REMOVE</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_default_value</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">InstanceState</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">dict_</span><span class="p">:</span> <span class="n">_InstanceDict</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Produce an empty value for an uninitialized scalar attribute."""</span>
+
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dict_</span><span class="p">,</span> <span class="p">(</span>
+            <span class="s2">"_default_value should only be invoked for an "</span>
+            <span class="s2">"uninitialized or expired attribute"</span>
+        <span class="p">)</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_scalar_value</span>
+        <span class="k">for</span> <span class="n">fn</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dispatch</span><span class="o">.</span><span class="n">init_scalar</span><span class="p">:</span>
+            <span class="n">ret</span> <span class="o">=</span> <span class="n">fn</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">dict_</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">ret</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">ATTR_EMPTY</span><span class="p">:</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">ret</span>
+
+        <span class="k">return</span> <span class="n">value</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">InstanceState</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">dict_</span><span class="p">:</span> <span class="n">_InstanceDict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dispatch</span><span class="o">.</span><span class="n">_active_history</span><span class="p">:</span>
@@ -1346,6 +1364,9 @@
         <span class="n">check_old</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">object</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">pop</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="n">DONT_SET</span><span class="p">:</span>
+            <span class="k">return</span>
+
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dispatch</span><span class="o">.</span><span class="n">_active_history</span><span class="p">:</span>
             <span class="n">old</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">dict_</span><span class="p">,</span> <span class="n">PASSIVE_RETURN_NO_VALUE</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -1383,7 +1404,7 @@
             <span class="n">fn</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">initiator</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_remove_token</span><span class="p">)</span>
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">ScalarObjectAttributeImpl</span><span class="p">(</span><span class="n">ScalarAttributeImpl</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_ScalarObjectAttributeImpl</span><span class="p">(</span><span class="n">_ScalarAttributeImpl</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""represents a scalar-holding InstrumentedAttribute,</span>
 <span class="sd">    where the target object is also instrumented.</span>
 
@@ -1512,6 +1533,9 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Set a value on the given InstanceState."""</span>
 
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="n">DONT_SET</span><span class="p">:</span>
+            <span class="k">return</span>
+
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dispatch</span><span class="o">.</span><span class="n">_active_history</span><span class="p">:</span>
             <span class="n">old</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
                 <span class="n">state</span><span class="p">,</span>
@@ -1594,7 +1618,7 @@
         <span class="k">return</span> <span class="n">value</span>
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">HasCollectionAdapter</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_HasCollectionAdapter</span><span class="p">:</span>
     <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>
 
     <span class="n">collection</span><span class="p">:</span> <span class="nb">bool</span>
@@ -1666,14 +1690,14 @@
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_is_collection_attribute_impl</span><span class="p">(</span>
-        <span class="n">impl</span><span class="p">:</span> <span class="n">AttributeImpl</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TypeGuard</span><span class="p">[</span><span class="n">CollectionAttributeImpl</span><span class="p">]:</span> <span class="o">...</span>
+        <span class="n">impl</span><span class="p">:</span> <span class="n">_AttributeImpl</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TypeGuard</span><span class="p">[</span><span class="n">_CollectionAttributeImpl</span><span class="p">]:</span> <span class="o">...</span>
 
 <span class="k">else</span><span class="p">:</span>
     <span class="n">_is_collection_attribute_impl</span> <span class="o">=</span> <span class="n">operator</span><span class="o">.</span><span class="n">attrgetter</span><span class="p">(</span><span class="s2">"collection"</span><span class="p">)</span>
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">CollectionAttributeImpl</span><span class="p">(</span><span class="n">HasCollectionAdapter</span><span class="p">,</span> <span class="n">AttributeImpl</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_CollectionAttributeImpl</span><span class="p">(</span><span class="n">_HasCollectionAdapter</span><span class="p">,</span> <span class="n">_AttributeImpl</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""A collection-holding attribute that instruments changes in membership.</span>
 
 <span class="sd">    Only handles collections of instrumented objects.</span>
@@ -1996,6 +2020,10 @@
         <span class="n">pop</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">_adapt</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="n">DONT_SET</span><span class="p">:</span>
+            <span class="k">return</span>
+
         <span class="n">iterable</span> <span class="o">=</span> <span class="n">orig_iterable</span> <span class="o">=</span> <span class="n">value</span>
         <span class="n">new_keys</span> <span class="o">=</span> <span class="kc">None</span>
 
@@ -2003,33 +2031,32 @@
         <span class="c1"># not trigger a lazy load of the old collection.</span>
         <span class="n">new_collection</span><span class="p">,</span> <span class="n">user_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_collection</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">_adapt</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">new_collection</span><span class="o">.</span><span class="n">_converter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">iterable</span> <span class="o">=</span> <span class="n">new_collection</span><span class="o">.</span><span class="n">_converter</span><span class="p">(</span><span class="n">iterable</span><span class="p">)</span>
+            <span class="n">setting_type</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">duck_type_collection</span><span class="p">(</span><span class="n">iterable</span><span class="p">)</span>
+            <span class="n">receiving_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_duck_typed_as</span>
+
+            <span class="k">if</span> <span class="n">setting_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">receiving_type</span><span class="p">:</span>
+                <span class="n">given</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="s2">"None"</span> <span class="k">if</span> <span class="n">iterable</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">iterable</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
+                <span class="p">)</span>
+                <span class="n">wanted</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="s2">"None"</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_duck_typed_as</span> <span class="ow">is</span> <span class="kc">None</span>
+                    <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_duck_typed_as</span><span class="o">.</span><span class="vm">__name__</span>
+                <span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                    <span class="s2">"Incompatible collection type: </span><span class="si">%s</span><span class="s2"> is not </span><span class="si">%s</span><span class="s2">-like"</span>
+                    <span class="o">%</span> <span class="p">(</span><span class="n">given</span><span class="p">,</span> <span class="n">wanted</span><span class="p">)</span>
+                <span class="p">)</span>
+
+            <span class="c1"># If the object is an adapted collection, return the (iterable)</span>
+            <span class="c1"># adapter.</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">iterable</span><span class="p">,</span> <span class="s2">"_sa_iterator"</span><span class="p">):</span>
+                <span class="n">iterable</span> <span class="o">=</span> <span class="n">iterable</span><span class="o">.</span><span class="n">_sa_iterator</span><span class="p">()</span>
+            <span class="k">elif</span> <span class="n">setting_type</span> <span class="ow">is</span> <span class="nb">dict</span><span class="p">:</span>
+                <span class="n">new_keys</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">iterable</span><span class="p">)</span>
+                <span class="n">iterable</span> <span class="o">=</span> <span class="n">iterable</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">setting_type</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">duck_type_collection</span><span class="p">(</span><span class="n">iterable</span><span class="p">)</span>
-                <span class="n">receiving_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_duck_typed_as</span>
-
-                <span class="k">if</span> <span class="n">setting_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">receiving_type</span><span class="p">:</span>
-                    <span class="n">given</span> <span class="o">=</span> <span class="p">(</span>
-                        <span class="n">iterable</span> <span class="ow">is</span> <span class="kc">None</span>
-                        <span class="ow">and</span> <span class="s2">"None"</span>
-                        <span class="ow">or</span> <span class="n">iterable</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
-                    <span class="p">)</span>
-                    <span class="n">wanted</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_duck_typed_as</span><span class="o">.</span><span class="vm">__name__</span>
-                    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-                        <span class="s2">"Incompatible collection type: </span><span class="si">%s</span><span class="s2"> is not </span><span class="si">%s</span><span class="s2">-like"</span>
-                        <span class="o">%</span> <span class="p">(</span><span class="n">given</span><span class="p">,</span> <span class="n">wanted</span><span class="p">)</span>
-                    <span class="p">)</span>
-
-                <span class="c1"># If the object is an adapted collection, return the (iterable)</span>
-                <span class="c1"># adapter.</span>
-                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">iterable</span><span class="p">,</span> <span class="s2">"_sa_iterator"</span><span class="p">):</span>
-                    <span class="n">iterable</span> <span class="o">=</span> <span class="n">iterable</span><span class="o">.</span><span class="n">_sa_iterator</span><span class="p">()</span>
-                <span class="k">elif</span> <span class="n">setting_type</span> <span class="ow">is</span> <span class="nb">dict</span><span class="p">:</span>
-                    <span class="n">new_keys</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">iterable</span><span class="p">)</span>
-                    <span class="n">iterable</span> <span class="o">=</span> <span class="n">iterable</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">iterable</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">iterable</span><span class="p">)</span>
+                <span class="n">iterable</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">iterable</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">util</span><span class="o">.</span><span class="n">duck_type_collection</span><span class="p">(</span><span class="n">iterable</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">dict</span><span class="p">:</span>
             <span class="n">new_keys</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
 
@@ -2171,7 +2198,7 @@
         <span class="k">return</span> <span class="n">user_data</span><span class="o">.</span><span class="n">_sa_adapter</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">backref_listeners</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_backref_listeners</span><span class="p">(</span>
     <span class="n">attribute</span><span class="p">:</span> <span class="n">QueryableAttribute</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">uselist</span><span class="p">:</span> <span class="nb">bool</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Apply listeners to synchronize a two-way relationship."""</span>
@@ -2473,7 +2500,7 @@
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_scalar_attribute</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span>
-        <span class="n">attribute</span><span class="p">:</span> <span class="n">ScalarAttributeImpl</span><span class="p">,</span>
+        <span class="n">attribute</span><span class="p">:</span> <span class="n">_ScalarAttributeImpl</span><span class="p">,</span>
         <span class="n">state</span><span class="p">:</span> <span class="n">InstanceState</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
         <span class="n">current</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">History</span><span class="p">:</span>
@@ -2514,7 +2541,7 @@
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_object_attribute</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span>
-        <span class="n">attribute</span><span class="p">:</span> <span class="n">ScalarObjectAttributeImpl</span><span class="p">,</span>
+        <span class="n">attribute</span><span class="p">:</span> <span class="n">_ScalarObjectAttributeImpl</span><span class="p">,</span>
         <span class="n">state</span><span class="p">:</span> <span class="n">InstanceState</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
         <span class="n">current</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
         <span class="n">original</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">_NO_HISTORY</span><span class="p">,</span>
@@ -2553,7 +2580,7 @@
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_collection</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span>
-        <span class="n">attribute</span><span class="p">:</span> <span class="n">CollectionAttributeImpl</span><span class="p">,</span>
+        <span class="n">attribute</span><span class="p">:</span> <span class="n">_CollectionAttributeImpl</span><span class="p">,</span>
         <span class="n">state</span><span class="p">:</span> <span class="n">InstanceState</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
         <span class="n">current</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">History</span><span class="p">:</span>
@@ -2644,7 +2671,7 @@
     <span class="k">return</span> <span class="n">manager</span><span class="o">.</span><span class="n">has_parent</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">optimistic</span><span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">register_attribute</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_register_attribute</span><span class="p">(</span>
     <span class="n">class_</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">_O</span><span class="p">],</span>
     <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
@@ -2653,20 +2680,20 @@
     <span class="n">doc</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kw</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">InstrumentedAttribute</span><span class="p">[</span><span class="n">_T</span><span class="p">]:</span>
-    <span class="n">desc</span> <span class="o">=</span> <span class="n">register_descriptor</span><span class="p">(</span>
+    <span class="n">desc</span> <span class="o">=</span> <span class="n">_register_descriptor</span><span class="p">(</span>
         <span class="n">class_</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">comparator</span><span class="o">=</span><span class="n">comparator</span><span class="p">,</span> <span class="n">parententity</span><span class="o">=</span><span class="n">parententity</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="n">doc</span>
     <span class="p">)</span>
-    <span class="n">register_attribute_impl</span><span class="p">(</span><span class="n">class_</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+    <span class="n">_register_attribute_impl</span><span class="p">(</span><span class="n">class_</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">desc</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">register_attribute_impl</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_register_attribute_impl</span><span class="p">(</span>
     <span class="n">class_</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">_O</span><span class="p">],</span>
     <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">uselist</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">callable_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">_LoaderCallable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">useobject</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="n">impl_class</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">AttributeImpl</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">impl_class</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">_AttributeImpl</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">backref</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kw</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QueryableAttribute</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
@@ -2683,35 +2710,35 @@
         <span class="s2">"_Dispatch[QueryableAttribute[Any]]"</span><span class="p">,</span> <span class="n">manager</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">dispatch</span>
     <span class="p">)</span>  <span class="c1"># noqa: E501</span>
 
-    <span class="n">impl</span><span class="p">:</span> <span class="n">AttributeImpl</span>
+    <span class="n">impl</span><span class="p">:</span> <span class="n">_AttributeImpl</span>
 
     <span class="k">if</span> <span class="n">impl_class</span><span class="p">:</span>
         <span class="c1"># TODO: this appears to be the WriteOnlyAttributeImpl /</span>
         <span class="c1"># DynamicAttributeImpl constructor which is hardcoded</span>
-        <span class="n">impl</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s2">"Type[WriteOnlyAttributeImpl]"</span><span class="p">,</span> <span class="n">impl_class</span><span class="p">)(</span>
+        <span class="n">impl</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s2">"Type[_WriteOnlyAttributeImpl]"</span><span class="p">,</span> <span class="n">impl_class</span><span class="p">)(</span>
             <span class="n">class_</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">dispatch</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span>
         <span class="p">)</span>
     <span class="k">elif</span> <span class="n">uselist</span><span class="p">:</span>
-        <span class="n">impl</span> <span class="o">=</span> <span class="n">CollectionAttributeImpl</span><span class="p">(</span>
+        <span class="n">impl</span> <span class="o">=</span> <span class="n">_CollectionAttributeImpl</span><span class="p">(</span>
             <span class="n">class_</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">callable_</span><span class="p">,</span> <span class="n">dispatch</span><span class="p">,</span> <span class="n">typecallable</span><span class="o">=</span><span class="n">typecallable</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span>
         <span class="p">)</span>
     <span class="k">elif</span> <span class="n">useobject</span><span class="p">:</span>
-        <span class="n">impl</span> <span class="o">=</span> <span class="n">ScalarObjectAttributeImpl</span><span class="p">(</span>
+        <span class="n">impl</span> <span class="o">=</span> <span class="n">_ScalarObjectAttributeImpl</span><span class="p">(</span>
             <span class="n">class_</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">callable_</span><span class="p">,</span> <span class="n">dispatch</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span>
         <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">impl</span> <span class="o">=</span> <span class="n">ScalarAttributeImpl</span><span class="p">(</span><span class="n">class_</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">callable_</span><span class="p">,</span> <span class="n">dispatch</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+        <span class="n">impl</span> <span class="o">=</span> <span class="n">_ScalarAttributeImpl</span><span class="p">(</span><span class="n">class_</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">callable_</span><span class="p">,</span> <span class="n">dispatch</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
 
     <span class="n">manager</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">impl</span> <span class="o">=</span> <span class="n">impl</span>
 
     <span class="k">if</span> <span class="n">backref</span><span class="p">:</span>
-        <span class="n">backref_listeners</span><span class="p">(</span><span class="n">manager</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">backref</span><span class="p">,</span> <span class="n">uselist</span><span class="p">)</span>
+        <span class="n">_backref_listeners</span><span class="p">(</span><span class="n">manager</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">backref</span><span class="p">,</span> <span class="n">uselist</span><span class="p">)</span>
 
     <span class="n">manager</span><span class="o">.</span><span class="n">post_configure_attribute</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">manager</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">register_descriptor</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_register_descriptor</span><span class="p">(</span>
     <span class="n">class_</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
     <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
@@ -2725,13 +2752,13 @@
         <span class="n">class_</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">comparator</span><span class="o">=</span><span class="n">comparator</span><span class="p">,</span> <span class="n">parententity</span><span class="o">=</span><span class="n">parententity</span>
     <span class="p">)</span>
 
-    <span class="n">descriptor</span><span class="o">.</span><span class="vm">__doc__</span> <span class="o">=</span> <span class="n">doc</span>  <span class="c1"># type: ignore</span>
+    <span class="n">descriptor</span><span class="o">.</span><span class="vm">__doc__</span> <span class="o">=</span> <span class="n">doc</span>  <span class="c1"># type: ignore[method-assign]</span>
 
     <span class="n">manager</span><span class="o">.</span><span class="n">instrument_attribute</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">descriptor</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">descriptor</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">unregister_attribute</span><span class="p">(</span><span class="n">class_</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_unregister_attribute</span><span class="p">(</span><span class="n">class_</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="n">manager_of_class</span><span class="p">(</span><span class="n">class_</span><span class="p">)</span><span class="o">.</span><span class="n">uninstrument_attribute</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
 
 
@@ -2769,7 +2796,7 @@
     <span class="n">attr</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">manager</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">impl</span>
 
     <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="n">HasCollectionAdapter</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="n">_HasCollectionAdapter</span><span class="p">)</span>
 
     <span class="n">old</span> <span class="o">=</span> <span class="n">dict_</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>  <span class="c1"># discard old collection</span>
     <span class="k">if</span> <span class="n">old</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -2830,8 +2857,6 @@
 <span class="sd">     an existing event listening function where an :class:`.Event` object</span>
 <span class="sd">     is being supplied; the object may be used to track the origin of the</span>
 <span class="sd">     chain of events.</span>
-
-<span class="sd">     .. versionadded:: 1.2.3</span>
 
 <span class="sd">    """</span>
     <span class="n">state</span><span class="p">,</span> <span class="n">dict_</span> <span class="o">=</span> <span class="n">instance_state</span><span class="p">(</span><span class="n">instance</span><span class="p">),</span> <span class="n">instance_dict</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
@@ -2900,8 +2925,6 @@
 <span class="sd">    will be able to see the object in the :attr:`.Session.dirty` collection and</span>
 <span class="sd">    may establish changes on it, which will then be included in the SQL</span>
 <span class="sd">    emitted.</span>
-
-<span class="sd">    .. versionadded:: 1.2</span>
 
 <span class="sd">    .. seealso::</span>
 
