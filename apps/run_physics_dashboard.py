@@ -16,7 +16,6 @@ from dataclasses import dataclass
 import numpy as np
 import plotly.graph_objects as go
 import torch
-import torch.nn as nn
 from dash import Dash, Input, Output, State, callback, dcc, exceptions, html, no_update
 
 from sciforge.matkit.carrier_pinn.models import CarrierPINN
@@ -190,7 +189,7 @@ def _build_result_figure(
             go.Scatter(
                 x=np_x,
                 y=predictions[:, 1],
-                name="Simulated Holes ($p/N_0$)",
+                name="Simulated Holes (p/N₀)",
                 line=dict(color="#9467bd", width=2.5, dash="dashdot"),
             )
         )
@@ -432,7 +431,7 @@ def start_training_callback(
         n_right = torch.tensor([[0.1, 1.0, 0.8]], dtype=torch.float32)
 
     # Step 3: Hand the loop off to a background thread, decoupled from this callback
-    metrics_queue: queue.Queue[TrainingMetrics] = queue.Queue(maxsize=200)
+    metrics_queue: "queue.Queue[TrainingMetrics]" = queue.Queue(maxsize=200)  # noqa: UP037
     stop_event = threading.Event()
     worker = PINNTrainingWorker(
         model=model,
