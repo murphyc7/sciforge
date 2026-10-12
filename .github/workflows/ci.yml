@@ -1,0 +1,137 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+# Cancel superseded runs on the same branch/PR so stale pushes do not queue up.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# CI only needs to read the repository; the docs workflow keeps its own write scope.
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint and Format (ruff)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Infrastructure
+        uses: actions/checkout@v4
+
+      - name: Initialise Active Python Runtime
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install Linter
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff
+
+      - name: Ruff Lint Checks
+        run: ruff check .
+
+      - name: Ruff Format Verification
+        run: ruff format --check .
+
+  typecheck:
+    name: Static Typing (mypy)
+    runs-on: ubuntu-latest
+    # Non-blocking until the existing typing debt is cleared; remove this line to
+    # promote mypy to a required gate.
+    continue-on-error: true
+
+    steps:
+      - name: Checkout Source Infrastructure
+        uses: actions/checkout@v4
+
+      - name: Initialise Active Python Runtime
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libpq-dev  # Required to compile the psycopg2 database driver
+
+      - name: Install Architecture Packages
+        run: |
+          python -m pip install --upgrade pip
+          # CPU-only PyTorch avoids pulling multi-gigabyte CUDA wheels onto the runner.
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -e ".[dev]"
+
+      - name: Mypy Static Analysis
+        run: mypy src apps
+
+  test:
+    name: Tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+
+    steps:
+      - name: Checkout Source Infrastructure
+        uses: actions/checkout@v4
+
+      - name: Initialise Active Python Runtime
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libpq-dev  # Required to compile the psycopg2 database driver
+
+      - name: Install Architecture Packages
+        run: |
+          python -m pip install --upgrade pip
+          # CPU-only PyTorch avoids pulling multi-gigabyte CUDA wheels onto the runner.
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -e ".[dev]"
+
+      - name: Execute Test Suite with Coverage
+        run: pytest --cov-report=xml
+
+      - name: Publish Coverage Summary
+        if: matrix.python-version == '3.12'
+        run: coverage report --format=markdown >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Archive Coverage Report
+        if: matrix.python-version == '3.12'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
+
+  # Single stable check name for branch protection, so the required-checks list does not
+  # need editing whenever the Python version matrix changes.
+  ci-success:
+    name: CI Success
+    if: always()
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Verify Required Jobs Passed
+        run: |
+          if [[ "${{ needs.lint.result }}" != "success" || "${{ needs.test.result }}" != "success" ]]; then
+            echo "One or more required jobs failed."
+            exit 1
+          fi
