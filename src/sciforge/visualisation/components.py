@@ -3,6 +3,7 @@
 from typing import Any
 
 import matplotlib.pyplot as plt
+from matplotlib.artist import Artist
 
 from sciforge.visualisation.base_plotter import BasePlotter
 
@@ -68,7 +69,7 @@ class DualAxisTransportPlotter(BasePlotter):
         ax1.set_ylabel("Normalised density, $n / N_0$", color=color_n)
         ax1.tick_params(axis="y", labelcolor=color_n)
 
-        lines = line1
+        lines: list[Artist] = [*line1]
 
         # Optional overlay: hole concentration (bipolar engine path)
         if p is not None:
@@ -81,7 +82,7 @@ class DualAxisTransportPlotter(BasePlotter):
                 linewidth=1.5,
                 label="Holes ($p$)",
             )
-            lines = lines + line_p
+            lines = [*lines, *line_p]
 
         # Optional overlay: Experimental Scattered Data Track
         if x_exp is not None and n_exp is not None:
@@ -97,7 +98,7 @@ class DualAxisTransportPlotter(BasePlotter):
                 label=exp_label,
             )
             # Re-wrap references into our legend compilation list tracking
-            lines = lines + [scatter_exp]
+            lines = [*lines, scatter_exp]
 
         # Secondary axis: Electrostatic Potential
         if phi is not None:
@@ -115,10 +116,10 @@ class DualAxisTransportPlotter(BasePlotter):
             ax2.set_ylabel(r"Electrostatic potential, $\phi$ (V)", color=color_phi)
             ax2.tick_params(axis="y", labelcolor=color_phi)
             ax2.grid(False)
-            lines = lines + line2
+            lines = [*lines, *line2]
 
         # Compile and place a unified legend box
-        labels = [line.get_label() for line in lines]
+        labels = [str(line.get_label()) for line in lines]
         ax1.legend(lines, labels, loc="upper right")
 
         plt.savefig(save_path, dpi=300)

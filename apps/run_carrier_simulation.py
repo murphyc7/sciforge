@@ -5,10 +5,10 @@ import sys
 import time
 
 import torch
-import torch.nn as nn
 
 from sciforge.matkit.carrier_pinn.models import CarrierPINN
 from sciforge.matkit.carrier_pinn.physics import (
+    BasePhysicsSolver,
     BipolarCoupledPhysics,
     ConstantFieldPhysics,
     PoissonCoupledPhysics,
@@ -61,6 +61,7 @@ def main() -> None:
     x_boundary_left = torch.tensor([[0.0]], dtype=torch.float32)
     x_boundary_right = torch.tensor([[1.0]], dtype=torch.float32)
 
+    physics_engine: BasePhysicsSolver
     if args.engine == "constant":
         model = CarrierPINN(output_dim=1)
         physics_engine = ConstantFieldPhysics(effective_mass=m_eff, permittivity=eps)
@@ -79,7 +80,7 @@ def main() -> None:
         n_boundary_right = torch.tensor([[0.1, 1.0, 0.8]], dtype=torch.float32)
 
     optimiser = torch.optim.Adam(model.parameters(), lr=1e-3)
-    mse_criterion = nn.MSELoss()
+    mse_criterion = torch.nn.MSELoss()
 
     logger.info("Starting Physics-Informed Neural Network optimisation loop...")
     start_time = time.time()

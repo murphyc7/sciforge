@@ -20,6 +20,7 @@ from dash import Dash, Input, Output, State, callback, dcc, exceptions, html, no
 
 from sciforge.matkit.carrier_pinn.models import CarrierPINN
 from sciforge.matkit.carrier_pinn.physics import (
+    BasePhysicsSolver,
     BipolarCoupledPhysics,
     ConstantFieldPhysics,
     PoissonCoupledPhysics,
@@ -194,7 +195,7 @@ def _build_result_figure(
             )
         )
         # Potential maps to channel 2 in bipolar mode
-        phi_data = predictions[:, 2]
+        phi_data: np.ndarray | None = predictions[:, 2]
     else:
         # Potential maps to channel 1 in traditional unipolar coupled mode
         phi_data = predictions[:, 1] if engine_mode == "coupled" else None
@@ -413,6 +414,7 @@ def start_training_callback(
     x_left = torch.tensor([[0.0]], dtype=torch.float32)
     x_right = torch.tensor([[1.0]], dtype=torch.float32)
 
+    physics_engine: BasePhysicsSolver
     if engine_mode == "constant":
         model = CarrierPINN(output_dim=1)
         physics_engine = ConstantFieldPhysics(effective_mass=m_eff, permittivity=eps)
@@ -532,8 +534,8 @@ def poll_training_metrics_callback(
     with _sessions_lock:
         _sessions.pop(session_id, None)
 
-    if final_snapshot.error is not None:
-        status = f"Training failed: {final_snapshot.error}"
+    if final_snapshot.error is not None or final_snapshot.predictions is None:
+        status = f"Training failed: {final_snapshot.error or 'no predictions returned'}"
         return progress_fig, no_update, history, True, False, status
 
     result_fig = _build_result_figure(

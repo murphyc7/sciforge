@@ -54,7 +54,7 @@ class SimulationTracker:
         with torch.no_grad():
             torch.onnx.export(
                 model,
-                dummy_input,
+                (dummy_input,),
                 full_path,
                 export_params=True,
                 opset_version=15,

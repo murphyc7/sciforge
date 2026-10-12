@@ -5,6 +5,7 @@ and exporting vector graphics.
 """
 
 from abc import ABC, abstractmethod
+from typing import Any
 
 import matplotlib.pyplot as plt
 
@@ -23,10 +24,11 @@ class BasePlotter(ABC):
         """
         self.fig_size = fig_size
         # Apply the global structural styling rules
-        plt.rcParams.update(get_academic_theme())
+        # The theme is a runtime dict[str, Any]; matplotlib's stubs only accept literal rc keys.
+        plt.rcParams.update(get_academic_theme())  # type: ignore[arg-type]
 
     @abstractmethod
-    def render(self, save_path: str, **kwargs: any) -> None:
+    def render(self, save_path: str, **kwargs: Any) -> None:
         """Executes data plotting operations and saves the output to a file.
 
         Args:

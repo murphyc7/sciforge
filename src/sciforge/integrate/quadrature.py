@@ -53,7 +53,7 @@ class QuadratureIntegrator:
             raise ValueError(
                 "Target function returned NaN or Inf. Structural singularity detected."
             )
-        return res
+        return np.asarray(res, dtype=np.float64)
 
     def _reset_telemetry(self) -> None:
         """Reset internal tracking metrics prior to running an integration technique.
@@ -143,7 +143,7 @@ class QuadratureIntegrator:
         self.metrics["function_evaluations"] = self._eval_count
         self.metrics["execution_time_seconds"] = time.perf_counter() - start_time
         return (
-            integral.item()
+            float(integral.item())
             if (hasattr(integral, "ndim") and integral.ndim == 0)
             else integral
         )
@@ -195,7 +195,7 @@ class QuadratureIntegrator:
         self.metrics["function_evaluations"] = self._eval_count
         self.metrics["execution_time_seconds"] = time.perf_counter() - start_time
         return (
-            integral.item()
+            float(integral.item())
             if (hasattr(integral, "ndim") and integral.ndim == 0)
             else integral
         )
@@ -251,7 +251,7 @@ class QuadratureIntegrator:
         self.metrics["function_evaluations"] = self._eval_count
         self.metrics["execution_time_seconds"] = time.perf_counter() - start_time
         return (
-            integral.item()
+            float(integral.item())
             if (hasattr(integral, "ndim") and integral.ndim == 0)
             else integral
         )
@@ -428,13 +428,13 @@ class QuadratureIntegrator:
         self.metrics["function_evaluations"] = self._eval_count
         self.metrics["execution_time_seconds"] = time.perf_counter() - start_time
         return (
-            integral.item()
+            float(integral.item())
             if (hasattr(integral, "ndim") and integral.ndim == 0)
             else integral
         )
 
     def integrate_infinite(
-        self, a: float, b: float, method: str = "gauss_legendre", **kwargs
+        self, a: float, b: float, method: str = "gauss_legendre", **kwargs: Any
     ) -> float | np.ndarray:
         """Evaluate improper integrals over semi-infinite or infinite domain fields.
 
@@ -491,7 +491,7 @@ class QuadratureIntegrator:
             elif method in ["simpsons", "trapezoidal"] and "n" not in kwargs:
                 kwargs["n"] = 100
 
-            res = runner(target_a, target_b, **kwargs)
+            res: float | np.ndarray = runner(target_a, target_b, **kwargs)
         finally:
             self.f = original_f
 

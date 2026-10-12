@@ -2,6 +2,7 @@
 [![Docs](https://github.com/murphyc7/sciforge/actions/workflows/docs.yml/badge.svg?branch=main)](https://github.com/murphyc7/sciforge/actions/workflows/docs.yml)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![Checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
 [![License: MIT](https://img.shields.io/github/license/murphyc7/sciforge)](LICENSE)
 ![Status](https://img.shields.io/badge/status-alpha-orange)
 
