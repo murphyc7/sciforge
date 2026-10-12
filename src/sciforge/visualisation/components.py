@@ -55,7 +55,7 @@ class DualAxisTransportPlotter(BasePlotter):
             ax1.set_title(title_text, pad=10)
 
         # Primary axis: Carrier Concentration (Model Simulation)
-        color_n = "#1f77b4" # Scientific blue
+        color_n = "#1f77b4"  # Scientific blue
         line1 = ax1.plot(
             x,
             n,
@@ -72,7 +72,7 @@ class DualAxisTransportPlotter(BasePlotter):
 
         # Optional overlay: hole concentration (bipolar engine path)
         if p is not None:
-            color_p = "#9467bd" # High-contrast scientific purple for holes
+            color_p = "#9467bd"  # High-contrast scientific purple for holes
             line_p = ax1.plot(
                 x,
                 p.flatten(),
@@ -89,7 +89,7 @@ class DualAxisTransportPlotter(BasePlotter):
             scatter_exp = ax1.scatter(
                 x_exp.flatten(),
                 n_exp.flatten(),
-                color="#2ca02c", # Distinct scientific green
+                color="#2ca02c",  # Distinct scientific green
                 marker="o",
                 s=20,
                 edgecolors="black",
@@ -103,7 +103,7 @@ class DualAxisTransportPlotter(BasePlotter):
         if phi is not None:
             phi = phi.flatten()
             ax2 = ax1.twinx()
-            color_phi = "#d62728" # Scientific red
+            color_phi = "#d62728"  # Scientific red
             line2 = ax2.plot(
                 x,
                 phi,
