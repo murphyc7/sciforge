@@ -1,11 +1,11 @@
-# SciForge: Scientific Computation Forge
-
 [![CI](https://github.com/murphyc7/sciforge/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/murphyc7/sciforge/actions/workflows/ci.yml)
 [![Docs](https://github.com/murphyc7/sciforge/actions/workflows/docs.yml/badge.svg?branch=main)](https://github.com/murphyc7/sciforge/actions/workflows/docs.yml)
-  ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
+![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![License: MIT](https://img.shields.io/github/license/murphyc7/sciforge)](LICENSE)
 ![Status](https://img.shields.io/badge/status-alpha-orange)
+
+# SciForge: Scientific Computation Forge
 
 SciForge is a computational science, scientific ML and data engineering platform. The capabilities of SciForge (*will eventually*) range from numerical integration, to Monte Carlo methods, to solving partial differential equations (PDEs) using a Physics-Informed Neural Network (PINN), to publication ready visualisations.
 
