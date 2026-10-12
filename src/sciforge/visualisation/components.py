@@ -110,9 +110,9 @@ class DualAxisTransportPlotter(BasePlotter):
                 color=color_phi,
                 linestyle="--",
                 linewidth=1.5,
-                label="Potential ($\phi$)",  # noqa: W605
+                label=r"Potential ($\phi$)",
             )
-            ax2.set_ylabel("Electrostatic potential, $\phi$ (V)", color=color_phi)  # noqa: W605
+            ax2.set_ylabel(r"Electrostatic potential, $\phi$ (V)", color=color_phi)
             ax2.tick_params(axis="y", labelcolor=color_phi)
             ax2.grid(False)
             lines = lines + line2
