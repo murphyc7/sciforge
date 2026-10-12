@@ -123,7 +123,7 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s2">"Target function returned NaN or Inf. Structural singularity detected."</span>
             <span class="p">)</span>
-        <span class="k">return</span> <span class="n">res</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_reset_telemetry</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Reset internal tracking metrics prior to running an integration technique.</span>
@@ -215,7 +215,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="s2">"function_evaluations"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eval_count</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="s2">"execution_time_seconds"</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
         <span class="k">return</span> <span class="p">(</span>
-            <span class="n">integral</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="nb">float</span><span class="p">(</span><span class="n">integral</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
             <span class="k">if</span> <span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="n">integral</span><span class="p">,</span> <span class="s2">"ndim"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">integral</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
             <span class="k">else</span> <span class="n">integral</span>
         <span class="p">)</span></div>
@@ -270,7 +270,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="s2">"function_evaluations"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eval_count</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="s2">"execution_time_seconds"</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
         <span class="k">return</span> <span class="p">(</span>
-            <span class="n">integral</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="nb">float</span><span class="p">(</span><span class="n">integral</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
             <span class="k">if</span> <span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="n">integral</span><span class="p">,</span> <span class="s2">"ndim"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">integral</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
             <span class="k">else</span> <span class="n">integral</span>
         <span class="p">)</span></div>
@@ -329,7 +329,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="s2">"function_evaluations"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eval_count</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="s2">"execution_time_seconds"</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
         <span class="k">return</span> <span class="p">(</span>
-            <span class="n">integral</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="nb">float</span><span class="p">(</span><span class="n">integral</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
             <span class="k">if</span> <span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="n">integral</span><span class="p">,</span> <span class="s2">"ndim"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">integral</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
             <span class="k">else</span> <span class="n">integral</span>
         <span class="p">)</span></div>
@@ -512,7 +512,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="s2">"function_evaluations"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eval_count</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="s2">"execution_time_seconds"</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
         <span class="k">return</span> <span class="p">(</span>
-            <span class="n">integral</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="nb">float</span><span class="p">(</span><span class="n">integral</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
             <span class="k">if</span> <span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="n">integral</span><span class="p">,</span> <span class="s2">"ndim"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">integral</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
             <span class="k">else</span> <span class="n">integral</span>
         <span class="p">)</span></div>
@@ -521,7 +521,7 @@
 <div class="viewcode-block" id="QuadratureIntegrator.integrate_infinite">
 <a class="viewcode-back" href="../../../index.html#sciforge.integrate.quadrature.QuadratureIntegrator.integrate_infinite">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">integrate_infinite</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"gauss_legendre"</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"gauss_legendre"</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Evaluate improper integrals over semi-infinite or infinite domain fields.</span>
 
@@ -578,7 +578,7 @@
             <span class="k">elif</span> <span class="n">method</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"simpsons"</span><span class="p">,</span> <span class="s2">"trapezoidal"</span><span class="p">]</span> <span class="ow">and</span> <span class="s2">"n"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
                 <span class="n">kwargs</span><span class="p">[</span><span class="s2">"n"</span><span class="p">]</span> <span class="o">=</span> <span class="mi">100</span>
 
-            <span class="n">res</span> <span class="o">=</span> <span class="n">runner</span><span class="p">(</span><span class="n">target_a</span><span class="p">,</span> <span class="n">target_b</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">res</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">runner</span><span class="p">(</span><span class="n">target_a</span><span class="p">,</span> <span class="n">target_b</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">finally</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">f</span> <span class="o">=</span> <span class="n">original_f</span>
 
