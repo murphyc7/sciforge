@@ -7,7 +7,7 @@ name = "sciforge"
 version = "0.1.0"
 description = "Scientific computation forge: numerical and visualisation tools for computational science"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 authors = [
     {name = "Conal Murphy", email = "conalmurphy993@gmail.com"}
 ]
@@ -16,10 +16,9 @@ classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering",
 ]
 
@@ -71,7 +70,7 @@ addopts = "-ra -q --strict-markers --cov=sciforge --cov-report=term-missing"
 
 [tool.black]
 line-length = 88
-target-version = ['py310']
+target-version = ['py311']
 
 [tool.ruff]
 line-length = 88
@@ -79,7 +78,7 @@ lint.select = ["E", "F", "W", "I", "N", "B", "UP"]
 lint.ignore = ["E501"]  # Line too long (handled by black)
 
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.11"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
