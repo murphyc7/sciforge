@@ -4,8 +4,9 @@ This module encapsulates SQLAlchemy connection pooling, maps application models 
 physical tables, and exposes transactional sessions to downstream pipelines.
 """
 
+from datetime import datetime
+
 from sqlalchemy import (
-    Column,
     DateTime,
     Float,
     ForeignKey,
@@ -14,11 +15,13 @@ from sqlalchemy import (
     create_engine,
     func,
 )
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, sessionmaker
 
 from sciforge.matkit.utils.config import Config
 
-Base = declarative_base()
+
+class Base(DeclarativeBase):
+    """Typed declarative base registering every ORM model for schema generation."""
 
 
 class MaterialModel(Base):
@@ -38,11 +41,11 @@ class MaterialModel(Base):
 
     __tablename__ = "materials"
 
-    material_id = Column(String(50), primary_key=True)
-    formula = Column(String(20), nullable=False)
-    space_group = Column(Integer, nullable=False)
-    effective_mass_me = Column(Float, nullable=False)
-    permittivity = Column(Float, nullable=False)
+    material_id: Mapped[str] = mapped_column(String(50), primary_key=True)
+    formula: Mapped[str] = mapped_column(String(20), nullable=False)
+    space_group: Mapped[int] = mapped_column(Integer, nullable=False)
+    effective_mass_me: Mapped[float] = mapped_column(Float, nullable=False)
+    permittivity: Mapped[float] = mapped_column(Float, nullable=False)
 
 
 class DatabaseClient:
@@ -65,7 +68,7 @@ class DatabaseClient:
         """Generates all structural physical tables mapped via SQLAlchemy models if missing."""
         Base.metadata.create_all(bind=self.engine)
 
-    def get_session(self):
+    def get_session(self) -> Session:
         """Returns a managed database session instance context wrapper.
 
         Returns:
@@ -96,18 +99,20 @@ class SimulationRegistryModel(Base):
 
     __tablename__ = "carrier_pinn_simulation_registry"
 
-    run_id: Column = Column(Integer, primary_key=True, autoincrement=True)
-    material_id: Column = Column(
+    run_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    material_id: Mapped[str] = mapped_column(
         String(50),
         ForeignKey("materials.material_id", ondelete="CASCADE"),
         nullable=False,
     )
-    engine_mode: Column = Column(String(20), nullable=False)
-    epochs_trained: Column = Column(Integer, nullable=False)
-    learning_rate: Column = Column(Float, nullable=False)
-    final_total_loss: Column = Column(Float, nullable=False)
-    final_bc_loss: Column = Column(Float, nullable=False)
-    final_physics_loss: Column = Column(Float, nullable=False)
-    execution_time_seconds: Column = Column(Float, nullable=False)
-    model_artifact_path: Column = Column(String(512), nullable=False)
-    created_at: Column = Column(DateTime, server_default=func.now())
+    engine_mode: Mapped[str] = mapped_column(String(20), nullable=False)
+    epochs_trained: Mapped[int] = mapped_column(Integer, nullable=False)
+    learning_rate: Mapped[float] = mapped_column(Float, nullable=False)
+    final_total_loss: Mapped[float] = mapped_column(Float, nullable=False)
+    final_bc_loss: Mapped[float] = mapped_column(Float, nullable=False)
+    final_physics_loss: Mapped[float] = mapped_column(Float, nullable=False)
+    execution_time_seconds: Mapped[float] = mapped_column(Float, nullable=False)
+    model_artifact_path: Mapped[str] = mapped_column(String(512), nullable=False)
+    created_at: Mapped[datetime | None] = mapped_column(
+        DateTime, server_default=func.now()
+    )

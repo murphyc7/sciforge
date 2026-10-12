@@ -5,10 +5,9 @@ operations without suffering from vanishing numerical gradients.
 """
 
 import torch
-import torch.nn as nn
 
 
-class CarrierPINN(nn.Module):
+class CarrierPINN(torch.nn.Module):
     """A deep network layer architecture for modeling charge carrier spatial distributions.
 
     Implements a fully connected Multi-Layer Perceptron (MLP) configuration using Hyperbolic
@@ -22,7 +21,7 @@ class CarrierPINN(nn.Module):
         hidden_layers: int = 4,
         hidden_dim: int = 50,
     ) -> None:
-        """Initializes the network layer architecture.
+        """Initialises the network layer architecture.
 
         Args:
             input_dim (int, optional): Coordinate parameter input counts. Defaults to 1.
@@ -33,20 +32,20 @@ class CarrierPINN(nn.Module):
         """
         super().__init__()
 
-        layers = []
+        layers: list[torch.nn.Module] = []
         # Input layer
-        layers.append(nn.Linear(input_dim, hidden_dim))
-        layers.append(nn.Tanh())
+        layers.append(torch.nn.Linear(input_dim, hidden_dim))
+        layers.append(torch.nn.Tanh())
 
         # Hidden layers
         for _ in range(hidden_layers - 1):
-            layers.append(nn.Linear(hidden_dim, hidden_dim))
-            layers.append(nn.Tanh())
+            layers.append(torch.nn.Linear(hidden_dim, hidden_dim))
+            layers.append(torch.nn.Tanh())
 
         # Output layer (Predicting carrier concentration 'n')
-        layers.append(nn.Linear(hidden_dim, output_dim))
+        layers.append(torch.nn.Linear(hidden_dim, output_dim))
 
-        self.network = nn.Sequential(*layers)
+        self.network = torch.nn.Sequential(*layers)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Evaluates carrier concentration predictions at targeted spatial grids.
@@ -55,6 +54,7 @@ class CarrierPINN(nn.Module):
             x (torch.Tensor): Coordinates tensor grid of shape [Batch Size, 1].
 
         Returns:
-            torch.Tensor: The corresponding predicted carrier concentrations.
+            predictions (torch.Tensor): The corresponding predicted carrier concentrations.
         """
-        return self.network(x)
+        predictions: torch.Tensor = self.network(x)
+        return predictions
