@@ -46,9 +46,6 @@ jobs:
   typecheck:
     name: Static Typing (mypy)
     runs-on: ubuntu-latest
-    # Non-blocking until the existing typing debt is cleared; remove this line to
-    # promote mypy to a required gate.
-    continue-on-error: true
 
     steps:
       - name: Checkout Source Infrastructure
@@ -125,13 +122,13 @@ jobs:
   ci-success:
     name: CI Success
     if: always()
-    needs: [lint, test]
+    needs: [lint, typecheck, test]
     runs-on: ubuntu-latest
 
     steps:
       - name: Verify Required Jobs Passed
         run: |
-          if [[ "${{ needs.lint.result }}" != "success" || "${{ needs.test.result }}" != "success" ]]; then
+          if [[ "${{ needs.lint.result }}" != "success" || "${{ needs.typecheck.result }}" != "success" || "${{ needs.test.result }}" != "success" ]]; then
             echo "One or more required jobs failed."
             exit 1
           fi
