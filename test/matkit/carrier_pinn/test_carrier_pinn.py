@@ -1,4 +1,6 @@
-"""Tests for murphyc7/sciforge/src/sciforge/matkit/carrier_pinn/"""
+"""Tests for:
+murphyc7/sciforge/src/sciforge/matkit/carrier_pinn/models.py
+murphyc7/sciforge/src/sciforge/matkit/carrier_pinn/physics.py"""
 
 import torch
 
