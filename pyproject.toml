@@ -85,5 +85,5 @@ warn_unused_configs = true
 disallow_untyped_defs = true
 
 [[tool.mypy.overrides]]
-module = ["sklearn.*", "plotly.*"]
+module = ["sklearn.*", "plotly.*", "scipy.*"]
 ignore_missing_imports = true
