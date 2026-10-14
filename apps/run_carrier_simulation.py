@@ -122,7 +122,7 @@ def main() -> None:
         stop_event=threading.Event(),
         lr=LEARNING_RATE,
         report_every=100,
-        poisson_loss_weight=args.poisson_weight,
+        poisson_loss_weighting=args.poisson_loss_weighting,
     )
     thread = threading.Thread(target=worker.run, daemon=True)
     start_time = time.time()
