@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 import argparse
 import logging
+import queue
 import sys
+import threading
 import time
 
 import numpy as np
@@ -13,6 +15,10 @@ from sciforge.matkit.carrier_pinn.physics import (
     BipolarCoupledPhysics,
     ConstantFieldPhysics,
     PoissonCoupledPhysics,
+)
+from sciforge.matkit.carrier_pinn.training_worker import (
+    PINNTrainingWorker,
+    TrainingMetrics,
 )
 from sciforge.matkit.registry.manager import SimulationTracker
 from sciforge.matkit.solvers.metrics import relative_l2_error
@@ -28,6 +34,8 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
 )
 logger = logging.getLogger(__name__)
+
+LEARNING_RATE = 1e-3
 
 
 def main() -> None:
@@ -47,6 +55,12 @@ def main() -> None:
         "--skip-validation",
         action="store_true",
         help="Skip the classical reference comparison (constant and coupled modes)",
+    )
+    parser.add_argument(
+        "--poisson-weight",
+        type=float,
+        default=1.0e-3,
+        help="Scale on the Poisson residual in the loss (squared in the loss term)",
     )
     args = parser.parse_args()
 
@@ -91,37 +105,50 @@ def main() -> None:
         n_boundary_left = torch.tensor([[1.0, 0.01, 0.0]], dtype=torch.float32)
         n_boundary_right = torch.tensor([[0.1, 1.0, 0.8]], dtype=torch.float32)
 
-    optimiser = torch.optim.Adam(model.parameters(), lr=1e-3)
-    mse_criterion = torch.nn.MSELoss()
-
     logger.info("Starting Physics-Informed Neural Network optimisation loop...")
+
+    # Run the optimisation on a background thread and stream its progress snapshots
+    metrics_queue: queue.Queue[TrainingMetrics] = queue.Queue(maxsize=200)
+    worker = PINNTrainingWorker(
+        model=model,
+        physics_engine=physics_engine,
+        x_interior=x_interior,
+        x_left=x_boundary_left,
+        x_right=x_boundary_right,
+        n_left=n_boundary_left,
+        n_right=n_boundary_right,
+        total_epochs=args.epochs,
+        metrics_queue=metrics_queue,
+        stop_event=threading.Event(),
+        lr=LEARNING_RATE,
+        report_every=100,
+        poisson_loss_weighting=args.poisson_loss_weighting,
+    )
+    thread = threading.Thread(target=worker.run, daemon=True)
     start_time = time.time()
+    thread.start()
 
-    # Training Loop Execution
-    for epoch in range(args.epochs + 1):
-        optimiser.zero_grad()
-
-        loss_bc = mse_criterion(
-            model(x_boundary_left), n_boundary_left
-        ) + mse_criterion(model(x_boundary_right), n_boundary_right)
-
-        residuals_dict = physics_engine.compute_residuals(x_interior, model)
-
-        loss_physics = 0.0
-        for key, res in residuals_dict.items():
-            if key == "poisson":
-                loss_physics += mse_criterion(res * 1.0e-3, torch.zeros_like(res))
-            else:
-                loss_physics += mse_criterion(res, torch.zeros_like(res))
-
-        total_loss = loss_bc + loss_physics
-        total_loss.backward()
-        optimiser.step()
-
-        if epoch % 100 == 0:
+    final: TrainingMetrics | None = None
+    while final is None:
+        try:
+            snapshot = metrics_queue.get(timeout=1.0)
+        except queue.Empty:
+            if not thread.is_alive():
+                break  # The worker exited without emitting a terminal snapshot
+            continue
+        if snapshot.is_final:
+            final = snapshot
+        else:
             logger.info(
-                f"Epoch {epoch:04d} | Total Loss: {total_loss.item():.4e} | BC Mismatch: {loss_bc.item():.4e}"
+                f"Epoch {snapshot.epoch:04d} | Total Loss: {snapshot.total_loss:.4e} "
+                f"| BC Mismatch: {snapshot.bc_loss:.4e}"
             )
+    thread.join()
+
+    if final is None or final.error is not None:
+        reason = final.error if final else "worker exited without a result"
+        logger.error(f"Training failed: {reason}")
+        sys.exit(1)
 
     # Sync eval, plotting, MLOPS registration phase
     logger.info("Simulation complete. Commencing evaluation and graphics generation...")
@@ -209,13 +236,9 @@ def main() -> None:
         )
 
     # 3. Package numeric primitives for MLOps ledger tracking
-    val_total = float(total_loss.item())
-    val_bc = float(loss_bc.item())
-    val_physics = (
-        float(loss_physics.item())
-        if isinstance(loss_physics, torch.Tensor)
-        else float(loss_physics)
-    )
+    val_total = final.total_loss
+    val_bc = final.bc_loss
+    val_physics = final.physics_loss
 
     logger.info("Proceeding to MLOps database serialisation step...")
     tracker = SimulationTracker(db_client=db_client)
@@ -223,7 +246,7 @@ def main() -> None:
         material_id=args.material_id,
         engine_mode=args.engine,
         epochs=args.epochs,
-        lr=1e-3,
+        lr=LEARNING_RATE,
         total_loss=val_total,
         bc_loss=val_bc,
         physics_loss=val_physics,
