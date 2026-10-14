@@ -73,6 +73,7 @@ class PINNTrainingWorker:
         stop_event: threading.Event,
         lr: float = 1e-3,
         report_every: int = 5,
+        poisson_loss_weighting: float = 1.0e-3,
     ) -> None:
         """Initialises the decoupled training worker.
 
@@ -92,6 +93,10 @@ class PINNTrainingWorker:
             lr (float, optional): Adam optimiser learning rate. Defaults to 1e-3.
             report_every (int, optional): Emit a metrics snapshot every N epochs, in
                 addition to the first and final epoch. Defaults to 5.
+            poisson_loss_weighting (float, optional): Scale applied to the poisson
+                residual before it enters the mean-squared-error loss. Defaults to
+                1e-3; values this small can leave the electrostatic constraint
+                under-enforced.
         """
         self.model = model
         self.physics_engine = physics_engine
@@ -105,6 +110,7 @@ class PINNTrainingWorker:
         self.stop_event = stop_event
         self.lr = lr
         self.report_every = max(1, report_every)
+        self.poisson_loss_weighting = poisson_loss_weighting
 
     def _push_metrics(self, metrics: TrainingMetrics) -> None:
         """Pushes a metrics snapshot onto the queue, dropping the oldest entry if full.
