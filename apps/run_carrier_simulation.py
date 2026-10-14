@@ -4,6 +4,7 @@ import logging
 import sys
 import time
 
+import numpy as np
 import torch
 
 from sciforge.matkit.carrier_pinn.models import CarrierPINN
@@ -14,6 +15,12 @@ from sciforge.matkit.carrier_pinn.physics import (
     PoissonCoupledPhysics,
 )
 from sciforge.matkit.registry.manager import SimulationTracker
+from sciforge.matkit.solvers.metrics import relative_l2_error
+from sciforge.matkit.solvers.reference import (
+    ReferenceSolution,
+    solve_constant_field,
+    solve_coupled_poisson,
+)
 from sciforge.matkit.utils.db_client import DatabaseClient, MaterialModel
 from sciforge.visualisation.components import DualAxisTransportPlotter
 
@@ -35,6 +42,11 @@ def main() -> None:
         choices=["constant", "coupled", "bipolar"],
         default="constant",
         help="Physics mode selector",
+    )
+    parser.add_argument(
+        "--skip-validation",
+        action="store_true",
+        help="Skip the classical reference comparison (constant and coupled modes)",
     )
     args = parser.parse_args()
 
@@ -121,6 +133,45 @@ def main() -> None:
         np_x = x_interior.cpu().numpy()
         np_out = final_predictions.cpu().numpy()
 
+    # 1b. Validate against the classical reference solution (constant and coupled modes)
+    reference: ReferenceSolution | None = None
+    reference_overlay: dict[str, object] = {}
+    if not args.skip_validation:
+        grid = np_x.ravel().astype(np.float64)
+        if isinstance(physics_engine, ConstantFieldPhysics):
+            reference = solve_constant_field(
+                physics_engine,
+                n_left=float(n_boundary_left[0, 0]),
+                n_right=float(n_boundary_right[0, 0]),
+                x=grid,
+            )
+        elif isinstance(physics_engine, PoissonCoupledPhysics):
+            reference = solve_coupled_poisson(
+                physics_engine,
+                n_left=float(n_boundary_left[0, 0]),
+                n_right=float(n_boundary_right[0, 0]),
+                phi_left=float(n_boundary_left[0, 1]),
+                phi_right=float(n_boundary_right[0, 1]),
+                x=grid,
+            )
+
+    if reference is not None:
+        n_error = relative_l2_error(np_out[:, 0], reference.n)
+        logger.info(f"Validation | relative L2 error vs reference (n): {n_error:.3e}")
+        if reference.phi is not None:
+            phi_error = relative_l2_error(np_out[:, 1], reference.phi)
+            logger.info(
+                f"Validation | relative L2 error vs reference (phi): {phi_error:.3e}"
+            )
+        # Reuse the plotter's overlay channel; subsample so markers stay legible, but
+        # always keep the final point so a sharp boundary layer is not truncated.
+        keep = np.union1d(np.arange(0, reference.x.size, 5), [reference.x.size - 1])
+        reference_overlay = {
+            "x_exp": reference.x[keep],
+            "n_exp": reference.n[keep],
+            "exp_label": "Classical reference",
+        }
+
     # 2. Initialise scientific plotting layer
     plotter = DualAxisTransportPlotter()
 
@@ -130,6 +181,7 @@ def main() -> None:
             x=np_x,
             n=np_out[:, 0:1],
             title=f"Steady-State 1D Transport Profiles ({formula})",
+            **reference_overlay,
         )
         logger.info("Constant field visualisation saved successfully.")
     elif args.engine == "coupled":
@@ -139,6 +191,7 @@ def main() -> None:
             n=np_out[:, 0:1],
             phi=np_out[:, 1:2],
             title=f"Self-Consistent Multi-Field Solutions ({formula})",
+            **reference_overlay,
         )
         logger.info("Coupled self-consistent field visualisation saved successfully.")
     else:

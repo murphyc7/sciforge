@@ -118,6 +118,28 @@ ruff check . && ruff format . --check
 pytest test/
 ```
 
+### 5. Benchmarking and Validation
+To validate the `constant` and `coupled` engines the trained PINN can be compared against an analytical solution (`constant`) and a converged `solve_bvp` solution (`coupled`).
+
+The script to generate benchmarking data can be ran via:
+```bash
+python apps/run_validation_benchmark.py --epochs 500 --seeds 3 --output benchmark_results.md
+```
+
+**Example data:**
+| Engine | Epochs | Seed | Final loss | Rel. L2 error (n) | Rel. L2 error (phi) |
+|---|---|---|---|---|---|
+| constant | 500 | 0 | 2.70e-05 | 2.58e-04 | n/a |
+| constant | 500 | 1 | 2.14e-04 | 7.29e-04 | n/a |
+| constant | 500 | 2 | 1.78e-04 | 6.35e-04 | n/a |
+| coupled | 500 | 0 | 1.52e-04 | 5.88e-01 | 3.99e-01 |
+| coupled | 500 | 1 | 2.42e-04 | 5.33e-01 | 3.78e-01 |
+| coupled | 500 | 2 | 3.39e-04 | 5.19e-01 | 3.66e-01 |
+
+**Known limitations:**
+- Accuracy in `coupled` case is limited by the Poisson loss weighting.
+- No validation currently in place for the `bipolar` engine.
+
 ---
 
 ## Full-Stack Interactive Physics Portal
